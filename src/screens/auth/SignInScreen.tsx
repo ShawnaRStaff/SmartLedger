@@ -20,14 +20,9 @@ export function SignInScreen({
 }: SignInScreenProps) {
   const { signIn, loading, error, clearError } = useAuth();
   const [socialLoading, setSocialLoading] = useState(false);
-  
-  const {
-    formData,
-    updateField,
-    touchField,
-    validateForm,
-    getFormValues,
-  } = useAuthForm();
+
+  const { formData, updateField, touchField, validateForm, getFormValues } =
+    useAuthForm();
 
   const handleSignIn = async () => {
     if (!validateForm()) {
@@ -39,7 +34,7 @@ export function SignInScreen({
 
     try {
       const result = await signIn(email, password);
-      
+
       if (result.success) {
         onSignInSuccess();
       } else {
@@ -53,7 +48,7 @@ export function SignInScreen({
 
   const handleGoogleSignIn = async () => {
     setSocialLoading(true);
-    
+
     try {
       // TODO: Implement Google Sign In
       // For now, show a placeholder
