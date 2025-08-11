@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
+import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
-import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -22,9 +19,7 @@ export default function ForgotPasswordScreen() {
   const [errors, setErrors] = useState<{ email?: string }>({});
   
   const { resetPassword } = useAuth();
-  const backgroundColor = useThemeColor({}, 'background');
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'tint');
+  const styles = useStyles();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -59,7 +54,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -69,10 +64,10 @@ export default function ForgotPasswordScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: textColor }]}>Reset Password</Text>
-            <Text style={[styles.subtitle, { color: textColor, opacity: 0.7 }]}>
+            <Typography variant="h2">Reset Password</Typography>
+            <Typography variant="body1" color="textSecondary">
               Enter your email to receive reset instructions
-            </Text>
+            </Typography>
           </View>
 
           <View style={styles.form}>
@@ -86,38 +81,41 @@ export default function ForgotPasswordScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   error={errors.email}
-                  leftIcon="mail"
+                  required
                 />
 
                 <Button
                   onPress={handleResetPassword}
                   loading={loading}
                   disabled={loading}
+                  variant="primary"
                   size="lg"
-                  style={styles.resetButton}
+                  fullWidth
                 >
                   Send Reset Email
                 </Button>
               </>
             ) : (
               <View style={styles.successContainer}>
-                <Text style={[styles.successText, { color: textColor }]}>
+                <Typography variant="h4" color="success" align="center">
                   Password reset email sent!
-                </Text>
-                <Text style={[styles.successSubtext, { color: textColor, opacity: 0.7 }]}>
+                </Typography>
+                <Typography variant="body1" color="textSecondary" align="center">
                   Check your inbox for instructions to reset your password.
-                </Text>
+                </Typography>
               </View>
             )}
 
             <View style={styles.signInContainer}>
-              <Text style={[styles.signInText, { color: textColor }]}>
+              <Typography variant="body2" color="textSecondary">
                 Remember your password?{' '}
-              </Text>
+              </Typography>
               <Link href="/(auth)/sign-in" asChild>
-                <Text style={[styles.signInLink, { color: primaryColor }]}>
-                  Sign In
-                </Text>
+                <TouchableOpacity>
+                  <Typography variant="body2" color="primary" weight="semibold">
+                    Sign In
+                  </Typography>
+                </TouchableOpacity>
               </Link>
             </View>
           </View>
@@ -127,61 +125,35 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((theme) => ({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'center',
   },
   form: {
     flex: 1,
   },
-  resetButton: {
-    marginTop: 24,
-    marginBottom: 32,
-  },
   successContainer: {
-    paddingVertical: 32,
+    paddingVertical: theme.spacing.xl,
     alignItems: 'center',
-  },
-  successText: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  successSubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 32,
+    gap: theme.spacing.md,
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: theme.spacing.xl,
   },
-  signInText: {
-    fontSize: 14,
-  },
-  signInLink: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+}));

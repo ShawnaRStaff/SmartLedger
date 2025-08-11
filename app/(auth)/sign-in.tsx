@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
+import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
-import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -22,9 +19,7 @@ export default function SignInScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const { signIn } = useAuth();
-  const backgroundColor = useThemeColor({}, 'background');
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'tint');
+  const styles = useStyles();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -60,7 +55,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -70,10 +65,10 @@ export default function SignInScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: textColor }]}>Welcome Back</Text>
-            <Text style={[styles.subtitle, { color: textColor, opacity: 0.7 }]}>
+            <Typography variant="h2">Welcome Back</Typography>
+            <Typography variant="body1" color="textSecondary">
               Sign in to your SmartLedger account
-            </Text>
+            </Typography>
           </View>
 
           <View style={styles.form}>
@@ -85,7 +80,7 @@ export default function SignInScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               error={errors.email}
-              leftIcon="mail"
+              required
             />
 
             <TextInput
@@ -96,33 +91,38 @@ export default function SignInScreen() {
               secureTextEntry
               showPasswordToggle
               error={errors.password}
-              leftIcon="lock.fill"
+              required
             />
 
             <Link href="/(auth)/forgot-password" asChild>
-              <Text style={[styles.forgotPassword, { color: primaryColor }]}>
-                Forgot Password?
-              </Text>
+              <TouchableOpacity style={styles.forgotPassword}>
+                <Typography variant="body2" color="primary">
+                  Forgot Password?
+                </Typography>
+              </TouchableOpacity>
             </Link>
 
             <Button
               onPress={handleSignIn}
               loading={loading}
               disabled={loading}
+              variant="primary"
               size="lg"
-              style={styles.signInButton}
+              fullWidth
             >
               Sign In
             </Button>
 
             <View style={styles.signUpContainer}>
-              <Text style={[styles.signUpText, { color: textColor }]}>
+              <Typography variant="body2" color="textSecondary">
                 Don't have an account?{' '}
-              </Text>
+              </Typography>
               <Link href="/(auth)/sign-up" asChild>
-                <Text style={[styles.signUpLink, { color: primaryColor }]}>
-                  Sign Up
-                </Text>
+                <TouchableOpacity>
+                  <Typography variant="body2" color="primary" weight="semibold">
+                    Sign Up
+                  </Typography>
+                </TouchableOpacity>
               </Link>
             </View>
           </View>
@@ -132,52 +132,35 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((theme) => ({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'center',
   },
   form: {
     flex: 1,
   },
   forgotPassword: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 24,
-    textAlign: 'right',
-  },
-  signInButton: {
-    marginTop: 8,
-    marginBottom: 24,
+    alignSelf: 'flex-end',
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.xs,
   },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: theme.spacing.lg,
   },
-  signUpText: {
-    fontSize: 14,
-  },
-  signUpLink: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+}));

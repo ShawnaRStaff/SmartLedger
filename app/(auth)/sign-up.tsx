@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
+import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
-import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function SignUpScreen() {
   const [name, setName] = useState('');
@@ -29,9 +26,7 @@ export default function SignUpScreen() {
   }>({});
   
   const { signUp } = useAuth();
-  const backgroundColor = useThemeColor({}, 'background');
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'tint');
+  const styles = useStyles();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -79,7 +74,7 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -89,10 +84,10 @@ export default function SignUpScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: textColor }]}>Create Account</Text>
-            <Text style={[styles.subtitle, { color: textColor, opacity: 0.7 }]}>
+            <Typography variant="h2">Create Account</Typography>
+            <Typography variant="body1" color="textSecondary">
               Join SmartLedger to manage your finances
-            </Text>
+            </Typography>
           </View>
 
           <View style={styles.form}>
@@ -103,7 +98,7 @@ export default function SignUpScreen() {
               onChangeText={setName}
               autoCapitalize="words"
               error={errors.name}
-              leftIcon="person.fill"
+              required
             />
 
             <TextInput
@@ -114,7 +109,7 @@ export default function SignUpScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               error={errors.email}
-              leftIcon="mail"
+              required
             />
 
             <TextInput
@@ -125,8 +120,8 @@ export default function SignUpScreen() {
               secureTextEntry
               showPasswordToggle
               error={errors.password}
-              leftIcon="lock.fill"
               hint="Minimum 6 characters"
+              required
             />
 
             <TextInput
@@ -137,27 +132,30 @@ export default function SignUpScreen() {
               secureTextEntry
               showPasswordToggle
               error={errors.confirmPassword}
-              leftIcon="lock.fill"
+              required
             />
 
             <Button
               onPress={handleSignUp}
               loading={loading}
               disabled={loading}
+              variant="primary"
               size="lg"
-              style={styles.signUpButton}
+              fullWidth
             >
               Create Account
             </Button>
 
             <View style={styles.signInContainer}>
-              <Text style={[styles.signInText, { color: textColor }]}>
+              <Typography variant="body2" color="textSecondary">
                 Already have an account?{' '}
-              </Text>
+              </Typography>
               <Link href="/(auth)/sign-in" asChild>
-                <Text style={[styles.signInLink, { color: primaryColor }]}>
-                  Sign In
-                </Text>
+                <TouchableOpacity>
+                  <Typography variant="body2" color="primary" weight="semibold">
+                    Sign In
+                  </Typography>
+                </TouchableOpacity>
               </Link>
             </View>
           </View>
@@ -167,46 +165,30 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((theme) => ({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'center',
   },
   form: {
     flex: 1,
-  },
-  signUpButton: {
-    marginTop: 24,
-    marginBottom: 24,
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: theme.spacing.lg,
   },
-  signInText: {
-    fontSize: 14,
-  },
-  signInLink: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+}));
