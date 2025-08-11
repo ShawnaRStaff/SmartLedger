@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "903364324234",
+    "project_id": "smartledger-b3015",
+    "storage_bucket": "smartledger-b3015.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903364324234:android:e3fb089e20358fbecb7673",
+        "android_client_info": {
+          "package_name": "com.missstaff.smartledger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "903364324234-mgm34m9qokb2ol4rtob4o1u5ckc587hv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.missstaff.smartledger",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "903364324234-7msddk7jrp7230b1s9n8ct4naec52utg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu1rYhtK8vyP_MRdCTZT4-St83ywdQkdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "903364324234-7msddk7jrp7230b1s9n8ct4naec52utg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
