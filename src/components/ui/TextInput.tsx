@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { 
   TextInput as RNTextInput, 
   TextInputProps as RNTextInputProps, 
-  View, 
-  TouchableOpacity 
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ViewStyle
 } from 'react-native';
-import { Text } from './Text';
 import { IconSymbol } from './IconSymbol';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export interface TextInputProps extends Omit<RNTextInputProps, 'placeholderTextColor'> {
   label?: string;
@@ -15,139 +18,176 @@ export interface TextInputProps extends Omit<RNTextInputProps, 'placeholderTextC
   leftIcon?: string;
   rightIcon?: string;
   onRightIconPress?: () => void;
-  className?: string;
-  containerClassName?: string;
-  inputClassName?: string;
+  containerStyle?: ViewStyle;
   showPasswordToggle?: boolean;
 }
 
-export function TextInput({
-  label,
-  error,
-  hint,
-  leftIcon,
-  rightIcon,
-  onRightIconPress,
-  className = '',
-  containerClassName = '',
-  inputClassName = '',
-  showPasswordToggle,
-  secureTextEntry: initialSecureTextEntry,
-  ...props
-}: TextInputProps) {
-  const [secureTextEntry, setSecureTextEntry] = useState(initialSecureTextEntry);
-  const [isFocused, setIsFocused] = useState(false);
+export const TextInput = forwardRef<RNTextInput, TextInputProps>(
+  ({
+    label,
+    error,
+    hint,
+    leftIcon,
+    rightIcon,
+    onRightIconPress,
+    containerStyle,
+    showPasswordToggle,
+    secureTextEntry: initialSecureTextEntry,
+    style,
+    ...props
+  }, ref) => {
+    const [secureTextEntry, setSecureTextEntry] = useState(initialSecureTextEntry);
+    const [isFocused, setIsFocused] = useState(false);
 
-  const handlePasswordToggle = () => {
-    setSecureTextEntry(!secureTextEntry);
-  };
+    const borderColor = useThemeColor({ light: '#D1D5DB', dark: '#4B5563' }, 'text');
+    const backgroundColor = useThemeColor({}, 'background');
+    const textColor = useThemeColor({}, 'text');
+    const placeholderColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'text');
+    const primaryColor = useThemeColor({}, 'tint');
+    const errorColor = '#EF4444';
+    const iconColor = isFocused ? primaryColor : '#6B7280';
 
-  const containerStyles = [
-    'mb-4',
-    containerClassName
-  ].filter(Boolean).join(' ');
+    const handlePasswordToggle = () => {
+      setSecureTextEntry(!secureTextEntry);
+    };
 
-  const inputContainerStyles = [
-    'flex-row items-center',
-    'border rounded-lg px-3 py-3',
-    'bg-white dark:bg-gray-800',
-    error 
-      ? 'border-error-500' 
-      : isFocused 
-        ? 'border-primary-500 dark:border-primary-400' 
-        : 'border-gray-300 dark:border-gray-600',
-    className
-  ].filter(Boolean).join(' ');
+    const actualRightIcon = showPasswordToggle && initialSecureTextEntry
+      ? (secureTextEntry ? 'eye' : 'eye.slash')
+      : rightIcon;
 
-  const textInputStyles = [
-    'flex-1 text-base',
-    'text-gray-900 dark:text-gray-100',
-    leftIcon ? 'ml-2' : '',
-    (rightIcon || showPasswordToggle) ? 'mr-2' : '',
-    inputClassName
-  ].filter(Boolean).join(' ');
+    const actualOnRightIconPress = showPasswordToggle && initialSecureTextEntry
+      ? handlePasswordToggle
+      : onRightIconPress;
 
-  const actualRightIcon = showPasswordToggle && initialSecureTextEntry
-    ? (secureTextEntry ? 'eye' : 'eye.slash')
-    : rightIcon;
-
-  const actualOnRightIconPress = showPasswordToggle && initialSecureTextEntry
-    ? handlePasswordToggle
-    : onRightIconPress;
-
-  return (
-    <View className={containerStyles}>
-      {label && (
-        <Text 
-          variant="small" 
-          className="text-gray-700 dark:text-gray-300 font-medium mb-2"
-        >
-          {label}
-        </Text>
-      )}
-      
-      <View className={inputContainerStyles}>
-        {leftIcon && (
-          <IconSymbol
-            name={leftIcon as any}
-            size={20}
-            color={isFocused ? '#0ea5e9' : '#6b7280'}
-          />
+    return (
+      <View style={[styles.container, containerStyle]}>
+        {label && (
+          <Text style={[styles.label, { color: textColor }]}>
+            {label}
+          </Text>
         )}
         
-        <RNTextInput
-          className={textInputStyles}
-          placeholderTextColor="#9ca3af"
-          secureTextEntry={secureTextEntry}
-          onFocus={(e) => {
-            setIsFocused(true);
-            props.onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            setIsFocused(false);
-            props.onBlur?.(e);
-          }}
-          {...props}
-        />
-        
-        {actualRightIcon && (
-          <TouchableOpacity 
-            onPress={actualOnRightIconPress}
-            disabled={!actualOnRightIconPress}
-            accessibilityRole="button"
-            accessibilityLabel={
-              showPasswordToggle 
-                ? (secureTextEntry ? 'Show password' : 'Hide password')
-                : 'Icon'
-            }
-          >
+        <View style={[
+          styles.inputContainer,
+          {
+            borderColor: error ? errorColor : (isFocused ? primaryColor : borderColor),
+            backgroundColor,
+          }
+        ]}>
+          {leftIcon && (
             <IconSymbol
-              name={actualRightIcon as any}
+              name={leftIcon as any}
               size={20}
-              color={isFocused ? '#0ea5e9' : '#6b7280'}
+              color={iconColor}
+              style={styles.leftIcon}
             />
-          </TouchableOpacity>
+          )}
+          
+          <RNTextInput
+            ref={ref}
+            style={[
+              styles.input,
+              { color: textColor },
+              leftIcon && styles.inputWithLeftIcon,
+              (rightIcon || showPasswordToggle) && styles.inputWithRightIcon,
+              style,
+            ]}
+            placeholderTextColor={placeholderColor}
+            secureTextEntry={secureTextEntry}
+            onFocus={(e) => {
+              setIsFocused(true);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              props.onBlur?.(e);
+            }}
+            {...props}
+          />
+          
+          {actualRightIcon && (
+            <TouchableOpacity 
+              onPress={actualOnRightIconPress}
+              disabled={!actualOnRightIconPress}
+              accessibilityRole="button"
+              accessibilityLabel={
+                showPasswordToggle 
+                  ? (secureTextEntry ? 'Show password' : 'Hide password')
+                  : 'Icon'
+              }
+              style={styles.rightIconButton}
+            >
+              <IconSymbol
+                name={actualRightIcon as any}
+                size={20}
+                color={iconColor}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {error && (
+          <Text 
+            style={[styles.errorText, { color: errorColor }]}
+            accessibilityRole="alert"
+          >
+            {error}
+          </Text>
+        )}
+        
+        {hint && !error && (
+          <Text style={[styles.hintText, { color: placeholderColor }]}>
+            {hint}
+          </Text>
         )}
       </View>
-      
-      {error && (
-        <Text 
-          variant="small" 
-          className="text-error-500 mt-1"
-          accessibilityRole="alert"
-        >
-          {error}
-        </Text>
-      )}
-      
-      {hint && !error && (
-        <Text 
-          variant="caption" 
-          className="text-gray-500 dark:text-gray-400 mt-1"
-        >
-          {hint}
-        </Text>
-      )}
-    </View>
-  );
-}
+    );
+  }
+);
+
+TextInput.displayName = 'TextInput';
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 48,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+  },
+  inputWithLeftIcon: {
+    marginLeft: 8,
+  },
+  inputWithRightIcon: {
+    marginRight: 8,
+  },
+  leftIcon: {
+    marginRight: 4,
+  },
+  rightIconButton: {
+    padding: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  hintText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+});

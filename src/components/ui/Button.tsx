@@ -1,13 +1,19 @@
 import React from 'react';
-import { TouchableOpacity, TouchableOpacityProps, ActivityIndicator } from 'react-native';
-import { Text } from './Text';
+import { 
+  TouchableOpacity, 
+  TouchableOpacityProps, 
+  ActivityIndicator, 
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle
+} from 'react-native';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export interface ButtonProps extends TouchableOpacityProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
-  className?: string;
-  textClassName?: string;
   children: React.ReactNode;
 }
 
@@ -16,59 +22,68 @@ export function Button({
   size = 'md',
   loading = false,
   disabled,
-  className = '',
-  textClassName = '',
   children,
+  style,
   ...props
 }: ButtonProps) {
   
-  const baseStyles = 'rounded-lg items-center justify-center flex-row';
+  const primaryColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
+  const backgroundColor = useThemeColor({}, 'background');
   
-  const sizeStyles = {
-    sm: 'px-3 py-2 min-h-[32px]',
-    md: 'px-4 py-3 min-h-[44px]',
-    lg: 'px-6 py-4 min-h-[52px]',
-  };
-
-  const variantStyles = {
-    primary: 'bg-primary-500 active:bg-primary-600 disabled:bg-gray-300 dark:disabled:bg-gray-600',
-    secondary: 'bg-secondary-500 active:bg-secondary-600 disabled:bg-gray-300 dark:disabled:bg-gray-600',
-    outline: 'border border-primary-500 bg-transparent active:bg-primary-50 dark:active:bg-primary-900 disabled:border-gray-300 dark:disabled:border-gray-600',
-    ghost: 'bg-transparent active:bg-gray-100 dark:active:bg-gray-800',
-  };
-
-  const textStyles = {
-    primary: 'text-white font-semibold',
-    secondary: 'text-white font-semibold',
-    outline: 'text-primary-500 font-semibold disabled:text-gray-400 dark:disabled:text-gray-500',
-    ghost: 'text-primary-500 font-semibold disabled:text-gray-400 dark:disabled:text-gray-500',
-  };
-
-  const textSizeStyles = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
-  };
-
   const isDisabled = disabled || loading;
 
-  const buttonClassName = [
-    baseStyles,
-    sizeStyles[size],
-    variantStyles[variant],
-    isDisabled ? 'opacity-50' : '',
-    className
-  ].filter(Boolean).join(' ');
+  const getButtonStyle = (): ViewStyle[] => {
+    const baseStyle: ViewStyle[] = [styles.base];
+    
+    // Size styles
+    if (size === 'sm') baseStyle.push(styles.sm);
+    else if (size === 'lg') baseStyle.push(styles.lg);
+    else baseStyle.push(styles.md);
 
-  const buttonTextClassName = [
-    textStyles[variant],
-    textSizeStyles[size],
-    textClassName
-  ].filter(Boolean).join(' ');
+    // Variant styles
+    if (variant === 'primary') {
+      baseStyle.push({ backgroundColor: primaryColor });
+    } else if (variant === 'secondary') {
+      baseStyle.push({ backgroundColor: '#6B7280' });
+    } else if (variant === 'outline') {
+      baseStyle.push(styles.outline, { borderColor: primaryColor });
+    } else if (variant === 'ghost') {
+      baseStyle.push(styles.ghost);
+    }
+
+    if (isDisabled) {
+      baseStyle.push(styles.disabled);
+    }
+
+    return baseStyle;
+  };
+
+  const getTextStyle = (): TextStyle[] => {
+    const textStyles: TextStyle[] = [styles.text];
+    
+    // Size text styles
+    if (size === 'sm') textStyles.push(styles.textSm);
+    else if (size === 'lg') textStyles.push(styles.textLg);
+    else textStyles.push(styles.textMd);
+
+    // Variant text styles
+    if (variant === 'primary' || variant === 'secondary') {
+      textStyles.push(styles.textWhite);
+    } else if (variant === 'outline' || variant === 'ghost') {
+      textStyles.push({ color: primaryColor });
+    }
+
+    if (isDisabled) {
+      textStyles.push(styles.textDisabled);
+    }
+
+    return textStyles;
+  };
 
   return (
     <TouchableOpacity
-      className={buttonClassName}
+      style={[...getButtonStyle(), style as ViewStyle]}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
@@ -77,13 +92,68 @@ export function Button({
       {loading && (
         <ActivityIndicator 
           size="small" 
-          color={variant === 'primary' || variant === 'secondary' ? '#FFFFFF' : '#0ea5e9'}
-          style={{ marginRight: 8 }}
+          color={variant === 'primary' || variant === 'secondary' ? '#FFFFFF' : primaryColor}
+          style={styles.loader}
         />
       )}
-      <Text className={buttonTextClassName}>
+      <Text style={getTextStyle()}>
         {children}
       </Text>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  sm: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 32,
+  },
+  md: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 44,
+  },
+  lg: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    minHeight: 52,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  ghost: {
+    backgroundColor: 'transparent',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  text: {
+    fontWeight: '600',
+  },
+  textSm: {
+    fontSize: 14,
+  },
+  textMd: {
+    fontSize: 16,
+  },
+  textLg: {
+    fontSize: 18,
+  },
+  textWhite: {
+    color: '#FFFFFF',
+  },
+  textDisabled: {
+    opacity: 0.7,
+  },
+  loader: {
+    marginRight: 8,
+  },
+});
