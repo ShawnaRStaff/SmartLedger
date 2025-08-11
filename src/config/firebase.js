@@ -1,7 +1,11 @@
 // @ts-check
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApp } from 'firebase/app';
+import {
+  initializeAuth,
+  getAuth,
+  getReactNativePersistence,
+} from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -30,22 +34,11 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// Initialize Firebase
-let app;
-let auth;
-let db;
+// initialize Firebase App
+const app = initializeApp(firebaseConfig);
+// initialize Firebase Auth for that app immediately
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
 
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  
-  console.log('Firebase initialized successfully');
-} else {
-  app = getApps()[0];
-  auth = getAuth(app);
-  db = getFirestore(app);
-}
-
-export { app, auth, db };
-export default app;
+export { app, auth, getApp, getAuth };

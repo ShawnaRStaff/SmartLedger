@@ -2,12 +2,6 @@
 export { Text } from './Text';
 export type { TextProps } from './Text';
 
-export { Button } from './Button';
-export type { ButtonProps } from './Button';
-
-export { TextInput } from './TextInput';
-export type { TextInputProps } from './TextInput';
-
 export { Card, CardHeader, CardContent, CardFooter } from './Card';
 export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } from './Card';
 

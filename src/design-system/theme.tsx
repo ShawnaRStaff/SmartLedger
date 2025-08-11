@@ -127,7 +127,16 @@ export function createThemedStyles<T extends StyleSheet.NamedStyles<T>>(
 ) {
   return () => {
     const theme = useTheme();
-    return React.useMemo(() => StyleSheet.create(stylesFn(theme)), [theme]);
+    return React.useMemo(() => {
+      return StyleSheet.create(stylesFn(theme));
+    }, [
+      theme.colors,
+      theme.spacing, 
+      theme.typography,
+      theme.borderRadius,
+      theme.shadows,
+      theme.isDark
+    ]);
   };
 }
 

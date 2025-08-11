@@ -6,67 +6,22 @@ import {
   Text,
   TouchableOpacity,
   ViewStyle,
+  StyleSheet,
 } from 'react-native';
-import { createThemedStyles, useTheme } from '../theme';
+import { useTheme } from '../theme';
 
-// ============================================================================
-// TEXT INPUT PROPS INTERFACE
-// ============================================================================
 export interface TextInputProps extends Omit<RNTextInputProps, 'placeholderTextColor'> {
-  /**
-   * Input label
-   */
   label?: string;
-  
-  /**
-   * Error message to display
-   */
   error?: string;
-  
-  /**
-   * Helper text to display below input
-   */
   hint?: string;
-  
-  /**
-   * Icon to display on the left side
-   */
   leftIcon?: React.ReactNode;
-  
-  /**
-   * Icon to display on the right side
-   */
   rightIcon?: React.ReactNode;
-  
-  /**
-   * Function to call when right icon is pressed
-   */
   onRightIconPress?: () => void;
-  
-  /**
-   * Container style override
-   */
   containerStyle?: ViewStyle;
-  
-  /**
-   * Input size
-   */
-  size?: 'sm' | 'md' | 'lg';
-  
-  /**
-   * Show password toggle for secure inputs
-   */
   showPasswordToggle?: boolean;
-  
-  /**
-   * Whether input is required (adds * to label)
-   */
   required?: boolean;
 }
 
-// ============================================================================
-// TEXT INPUT COMPONENT
-// ============================================================================
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(
   ({
     label,
@@ -76,7 +31,6 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
     rightIcon,
     onRightIconPress,
     containerStyle,
-    size = 'md',
     showPasswordToggle,
     secureTextEntry: initialSecureTextEntry,
     required,
@@ -86,7 +40,6 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
     const [secureTextEntry, setSecureTextEntry] = useState(initialSecureTextEntry);
     const [isFocused, setIsFocused] = useState(false);
     
-    const styles = useStyles();
     const theme = useTheme();
 
     const handlePasswordToggle = () => {
@@ -98,8 +51,6 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
           <TouchableOpacity 
             onPress={handlePasswordToggle}
             style={styles.iconButton}
-            accessibilityRole="button"
-            accessibilityLabel={secureTextEntry ? 'Show password' : 'Hide password'}
           >
             <Text style={styles.passwordToggle}>
               {secureTextEntry ? '👁️' : '🙈'}
@@ -108,35 +59,22 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
         )
       : rightIcon;
 
-    const actualOnRightIconPress = showPasswordToggle && initialSecureTextEntry
-      ? handlePasswordToggle
-      : onRightIconPress;
-
-    // Get input container styles based on state
-    const getInputContainerStyle = () => {
-      const baseStyle = [styles.inputContainer, styles[`size_${size}`]];
-      
-      if (error) {
-        baseStyle.push(styles.inputContainerError);
-      } else if (isFocused) {
-        baseStyle.push(styles.inputContainerFocused);
-      } else {
-        baseStyle.push(styles.inputContainerDefault);
-      }
-      
-      return baseStyle;
-    };
-
     return (
       <View style={[styles.container, containerStyle]}>
         {label && (
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>
             {label}
-            {required && <Text style={styles.required}> *</Text>}
+            {required && <Text style={[styles.required, { color: theme.colors.error }]}> *</Text>}
           </Text>
         )}
         
-        <View style={getInputContainerStyle()}>
+        <View style={[
+          styles.inputContainer,
+          {
+            borderColor: error ? theme.colors.error : (isFocused ? theme.colors.primary : theme.colors.border),
+            backgroundColor: theme.colors.surface,
+          }
+        ]}>
           {leftIcon && (
             <View style={styles.leftIconContainer}>
               {leftIcon}
@@ -147,8 +85,9 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             ref={ref}
             style={[
               styles.input,
+              { color: theme.colors.text },
               leftIcon && styles.inputWithLeftIcon,
-              (actualRightIcon || onRightIconPress) && styles.inputWithRightIcon,
+              actualRightIcon && styles.inputWithRightIcon,
               style,
             ]}
             placeholderTextColor={theme.colors.textTertiary}
@@ -166,33 +105,19 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
           
           {actualRightIcon && (
             <View style={styles.rightIconContainer}>
-              {onRightIconPress ? (
-                <TouchableOpacity 
-                  onPress={actualOnRightIconPress}
-                  style={styles.iconButton}
-                  accessibilityRole="button"
-                >
-                  {actualRightIcon}
-                </TouchableOpacity>
-              ) : (
-                actualRightIcon
-              )}
+              {actualRightIcon}
             </View>
           )}
         </View>
         
         {error && (
-          <Text 
-            style={styles.errorText}
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-          >
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
             {error}
           </Text>
         )}
         
         {hint && !error && (
-          <Text style={styles.hintText}>
+          <Text style={[styles.hintText, { color: theme.colors.textSecondary }]}>
             {hint}
           </Text>
         )}
@@ -203,109 +128,58 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
 
 TextInput.displayName = 'TextInput';
 
-// ============================================================================
-// THEMED STYLES
-// ============================================================================
-const useStyles = createThemedStyles((theme) => ({
+const styles = StyleSheet.create({
   container: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
-  
   label: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
   },
-  
   required: {
-    color: theme.colors.error,
+    fontSize: 14,
   },
-  
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 48,
   },
-  
-  inputContainerDefault: {
-    borderColor: theme.colors.border,
-  },
-  
-  inputContainerFocused: {
-    borderColor: theme.colors.borderFocused,
-    ...theme.shadows.sm,
-  },
-  
-  inputContainerError: {
-    borderColor: theme.colors.borderError,
-  },
-  
-  // Size variants
-  size_sm: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    minHeight: theme.layout.componentHeight.inputSm,
-  },
-  
-  size_md: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    minHeight: theme.layout.componentHeight.inputMd,
-  },
-  
-  size_lg: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    minHeight: theme.layout.componentHeight.inputLg,
-  },
-  
   input: {
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text,
-    padding: 0, // Remove default padding
+    fontSize: 16,
+    padding: 0,
   },
-  
   inputWithLeftIcon: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: 8,
   },
-  
   inputWithRightIcon: {
-    marginRight: theme.spacing.sm,
+    marginRight: 8,
   },
-  
   leftIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
   rightIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
   iconButton: {
-    padding: theme.spacing.xs,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 4,
   },
-  
   passwordToggle: {
     fontSize: 16,
   },
-  
   errorText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.error,
-    marginTop: theme.spacing.xs,
+    fontSize: 12,
+    marginTop: 4,
   },
-  
   hintText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
+    fontSize: 12,
+    marginTop: 4,
   },
-}));
+});
