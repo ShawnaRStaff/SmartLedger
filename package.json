@@ -8,7 +8,6 @@
   "version": "1.0.0",
   "scripts": {
     "start": "npx expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
@@ -20,13 +19,11 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
-    "@react-native-async-storage/async-storage": "2.1.2",
-    "@react-native-firebase/app": "^23.0.0",
-    "@react-native-firebase/auth": "^23.0.0",
-    "@react-native-firebase/firestore": "^23.0.0",
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "babel-preset-expo": "~13.0.0",
     "expo": "~53.0.20",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",
