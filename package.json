@@ -1,23 +1,36 @@
 {
   "name": "smartledger",
+  "author": {
+    "name": "Shawna Staff",
+    "email": "shawnastaff@gmail.com"
+  },
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "lint": "expo lint"
+    "start": "npx expo start",
+    "android": "npx expo start --android",
+    "ios": "npx expo start --ios",
+    "web": "npx expo start --web",
+    "lint": "npx expo lint",
+    "test": "npx jest",
+    "test:watch": "npx jest --watch",
+    "test:coverage": "npx jest --coverage",
+    "type-check": "npx tsc --noEmit",
+    "eas-dev-build-android": "npx eas build --profile development --platform android",
+    "eas-prod-build-android": "npx eas build --profile production --platform android",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "babel-preset-expo": "~13.0.0",
     "expo": "~53.0.20",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",
+    "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.4.0",
@@ -28,6 +41,9 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
+    "firebase": "^12.1.0",
+    "jest-expo": "~53.0.9",
+    "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
@@ -40,10 +56,28 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.2.2",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.0.10",
-    "typescript": "~5.8.3",
     "eslint": "^9.25.0",
-    "eslint-config-expo": "~9.2.0"
+    "eslint-config-expo": "~9.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.1",
+    "typescript": "~5.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx eslint --fix",
+      "npx prettier --write"
+    ],
+    "*.{js,jsx,json,md}": [
+      "npx prettier --write"
+    ]
   },
   "private": true
 }

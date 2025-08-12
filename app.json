@@ -16,6 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.missstaff.smartledger",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2fdbc97e-aad1-4aaa-9799-cb0b4e1a6f78"
+      }
     }
   }
 }
