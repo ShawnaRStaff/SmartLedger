@@ -31,6 +31,12 @@
       "@/constants/*": [
         "src/constants/*"
       ],
+      "@/design-system": [
+        "src/design-system"
+      ],
+      "@/design-system/*": [
+        "src/design-system/*"
+      ],
       "@/assets/*": [
         "assets/*"
       ]
