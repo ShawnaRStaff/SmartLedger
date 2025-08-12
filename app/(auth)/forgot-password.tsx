@@ -6,10 +6,11 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
+import { Button, TextInput, Typography, useTheme } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
 
 export default function ForgotPasswordScreen() {
@@ -19,7 +20,7 @@ export default function ForgotPasswordScreen() {
   const [errors, setErrors] = useState<{ email?: string }>({});
   
   const { resetPassword } = useAuth();
-  const styles = useStyles();
+  const theme = useTheme();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -54,16 +55,19 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, {
+            paddingHorizontal: theme.spacing.lg,
+            paddingVertical: theme.spacing.xl,
+          }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, { marginBottom: theme.spacing.xl }]}>
             <Typography variant="h2">Reset Password</Typography>
             <Typography variant="body1" color="textSecondary">
               Enter your email to receive reset instructions
@@ -96,7 +100,9 @@ export default function ForgotPasswordScreen() {
                 </Button>
               </>
             ) : (
-              <View style={styles.successContainer}>
+              <View style={[styles.successContainer, {
+                paddingVertical: theme.spacing.xl,
+              }]}>
                 <Typography variant="h4" color="success" align="center">
                   Password reset email sent!
                 </Typography>
@@ -106,7 +112,7 @@ export default function ForgotPasswordScreen() {
               </View>
             )}
 
-            <View style={styles.signInContainer}>
+            <View style={[styles.signInContainer, { marginTop: theme.spacing.xl }]}>
               <Typography variant="body2" color="textSecondary">
                 Remember your password?{' '}
               </Typography>
@@ -125,35 +131,29 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const useStyles = createThemedStyles((theme) => ({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: theme.spacing.xl,
     alignItems: 'center',
   },
   form: {
     flex: 1,
   },
   successContainer: {
-    paddingVertical: theme.spacing.xl,
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 16,
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: theme.spacing.xl,
   },
-}));
+});

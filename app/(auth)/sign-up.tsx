@@ -6,10 +6,11 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
+import { Button, TextInput, Typography, useTheme } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
 
 export default function SignUpScreen() {
@@ -26,7 +27,7 @@ export default function SignUpScreen() {
   }>({});
   
   const { signUp } = useAuth();
-  const styles = useStyles();
+  const theme = useTheme();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -74,16 +75,19 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, {
+            paddingHorizontal: theme.spacing.lg,
+            paddingVertical: theme.spacing.xl,
+          }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, { marginBottom: theme.spacing.xl }]}>
             <Typography variant="h2">Create Account</Typography>
             <Typography variant="body1" color="textSecondary">
               Join SmartLedger to manage your finances
@@ -146,7 +150,7 @@ export default function SignUpScreen() {
               Create Account
             </Button>
 
-            <View style={styles.signInContainer}>
+            <View style={[styles.signInContainer, { marginTop: theme.spacing.lg }]}>
               <Typography variant="body2" color="textSecondary">
                 Already have an account?{' '}
               </Typography>
@@ -165,21 +169,17 @@ export default function SignUpScreen() {
   );
 }
 
-const useStyles = createThemedStyles((theme) => ({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: theme.spacing.xl,
     alignItems: 'center',
   },
   form: {
@@ -189,6 +189,5 @@ const useStyles = createThemedStyles((theme) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
   },
-}));
+});

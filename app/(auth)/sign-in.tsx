@@ -6,10 +6,11 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, TextInput, Typography, createThemedStyles } from '@/design-system';
+import { Button, TextInput, Typography, useTheme } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
 
 export default function SignInScreen() {
@@ -19,7 +20,7 @@ export default function SignInScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const { signIn } = useAuth();
-  const styles = useStyles();
+  const theme = useTheme();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -55,16 +56,19 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { 
+            paddingHorizontal: theme.spacing.lg,
+            paddingVertical: theme.spacing.xl,
+          }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
+          <View style={[styles.header, { marginBottom: theme.spacing.xl }]}>
             <Typography variant="h2">Welcome Back</Typography>
             <Typography variant="body1" color="textSecondary">
               Sign in to your SmartLedger account
@@ -95,7 +99,10 @@ export default function SignInScreen() {
             />
 
             <Link href="/(auth)/forgot-password" asChild>
-              <TouchableOpacity style={styles.forgotPassword}>
+              <TouchableOpacity style={[styles.forgotPassword, {
+                marginBottom: theme.spacing.lg,
+                padding: theme.spacing.xs,
+              }]}>
                 <Typography variant="body2" color="primary">
                   Forgot Password?
                 </Typography>
@@ -113,9 +120,9 @@ export default function SignInScreen() {
               Sign In
             </Button>
 
-            <View style={styles.signUpContainer}>
+            <View style={[styles.signUpContainer, { marginTop: theme.spacing.lg }]}>
               <Typography variant="body2" color="textSecondary">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
               </Typography>
               <Link href="/(auth)/sign-up" asChild>
                 <TouchableOpacity>
@@ -132,21 +139,17 @@ export default function SignInScreen() {
   );
 }
 
-const useStyles = createThemedStyles((theme) => ({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
   },
   header: {
-    marginBottom: theme.spacing.xl,
     alignItems: 'center',
   },
   form: {
@@ -154,13 +157,10 @@ const useStyles = createThemedStyles((theme) => ({
   },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginBottom: theme.spacing.lg,
-    padding: theme.spacing.xs,
   },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
   },
-}));
+});

@@ -86,8 +86,8 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             style={[
               styles.input,
               { color: theme.colors.text },
-              leftIcon && styles.inputWithLeftIcon,
-              actualRightIcon && styles.inputWithRightIcon,
+              leftIcon ? styles.inputWithLeftIcon : undefined,
+              actualRightIcon ? styles.inputWithRightIcon : undefined,
               style,
             ]}
             placeholderTextColor={theme.colors.textTertiary}
