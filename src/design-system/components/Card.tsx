@@ -26,21 +26,22 @@ interface BaseCardProps {
    */
   fullWidth?: boolean;
   
-  children: React.ReactNode;
 }
 
-export interface CardProps extends ViewProps, BaseCardProps {
+export interface CardProps extends Omit<ViewProps, 'children'>, BaseCardProps {
   /**
    * Make card pressable
    */
   onPress?: never;
+  children: React.ReactNode;
 }
 
-export interface PressableCardProps extends TouchableOpacityProps, BaseCardProps {
+export interface PressableCardProps extends Omit<TouchableOpacityProps, 'children'>, BaseCardProps {
   /**
    * Press handler for interactive cards
    */
   onPress: () => void;
+  children: React.ReactNode;
 }
 
 // ============================================================================

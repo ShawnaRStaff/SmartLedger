@@ -98,16 +98,17 @@ export default function SignInScreen() {
               required
             />
 
-            <Link href="/(auth)/forgot-password" asChild>
-              <TouchableOpacity style={[styles.forgotPassword, {
-                marginBottom: theme.spacing.lg,
-                padding: theme.spacing.xs,
-              }]}>
-                <Typography variant="body2" color="primary">
-                  Forgot Password?
-                </Typography>
-              </TouchableOpacity>
-            </Link>
+            <View style={{ marginBottom: theme.spacing.sm }}>
+              <Link href="/(auth)/forgot-password" asChild>
+                <TouchableOpacity style={[styles.forgotPassword, {
+                  padding: theme.spacing.xs,
+                }]}>
+                  <Typography variant="body2" color="primary">
+                    Forgot Password?
+                  </Typography>
+                </TouchableOpacity>
+              </Link>
+            </View>
 
             <Button
               onPress={handleSignIn}

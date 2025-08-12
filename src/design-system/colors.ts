@@ -13,7 +13,7 @@ const brandColors = {
     200: '#99F6E4',
     300: '#5EEAD4',
     400: '#2DD4BF',
-    500: '#0a7ea4', // Main brand color - original teal
+    500: '#0a7ea4', // YOUR ORIGINAL GREEN/TEAL - don't change this!
     600: '#0891B2',
     700: '#0E7490',
     800: '#155E75',
@@ -168,20 +168,20 @@ export const lightColors = {
 // DARK THEME COLORS
 // ============================================================================
 export const darkColors = {
-  // Primary colors
-  primary: brandColors.primary[400],
-  primaryLight: brandColors.primary[300],
-  primaryDark: brandColors.primary[600],
+  // Primary colors - match light theme structure
+  primary: brandColors.primary[500],
+  primaryLight: brandColors.primary[100],
+  primaryDark: brandColors.primary[700],
   
-  // Secondary colors
-  secondary: brandColors.secondary[400],
-  secondaryLight: brandColors.secondary[300],
-  secondaryDark: brandColors.secondary[600],
+  // Secondary colors - match light theme structure
+  secondary: brandColors.secondary[500],
+  secondaryLight: brandColors.secondary[100],
+  secondaryDark: brandColors.secondary[700],
   
-  // Accent colors
-  accent: brandColors.accent[400],
-  accentLight: brandColors.accent[300],
-  accentDark: brandColors.accent[600],
+  // Accent colors - match light theme structure
+  accent: brandColors.accent[500],
+  accentLight: brandColors.accent[100],
+  accentDark: brandColors.accent[700],
   
   // Background colors
   background: neutralColors.gray[950],

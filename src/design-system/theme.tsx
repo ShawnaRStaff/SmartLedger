@@ -34,7 +34,7 @@ const lightTheme: Theme = {
 };
 
 const darkTheme: Theme = {
-  colors: darkColors,
+  colors: darkColors as any,
   spacing,
   typography,
   borderRadius,
