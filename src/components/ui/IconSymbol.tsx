@@ -23,6 +23,8 @@ const MAPPING = {
   'person': 'person',
   'eye': 'visibility',
   'eye.slash': 'visibility-off',
+  'creditcard.fill': 'account-balance-wallet',
+  'book.fill': 'menu-book',
 } as IconMapping;
 
 /**

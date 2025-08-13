@@ -1,0 +1,303 @@
+/**
+ * SmartLedger Check Register - Data Migration Tests
+ * Tests for data migration and initialization utilities
+ */
+
+// Mock Firebase to avoid import issues in tests
+jest.mock('@/services/firebase/config', () => ({
+  db: {}
+}));
+
+import { 
+  DEFAULT_CATEGORIES, 
+  DEFAULT_STARTER_ACCOUNT,
+  generateUniqueAccountName
+} from '../utils/dataMigration';
+import { 
+  generateTestAccounts, 
+  generateTestCategories,
+  SAMPLE_ACCOUNT,
+  SAMPLE_TRANSACTIONS,
+  SAMPLE_CATEGORIES 
+} from '../utils/testData';
+import { 
+  validateSchema, 
+  CreateAccountSchema, 
+  CreateCategorySchema,
+  TransactionSchema 
+} from '../utils/validation';
+
+describe('Data Migration Utilities', () => {
+  
+  describe('Default Data Validation', () => {
+    
+    test('should have valid default categories', () => {
+      DEFAULT_CATEGORIES.forEach(category => {
+        const categoryWithUser = {
+          ...category,
+          userId: 'test-user',
+          status: 'active' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const result = validateSchema(CreateCategorySchema, categoryWithUser);
+        expect(result.success).toBe(true);
+      });
+    });
+    
+    test('should have valid default starter account', () => {
+      const accountWithUser = {
+        ...DEFAULT_STARTER_ACCOUNT,
+        currentBalance: DEFAULT_STARTER_ACCOUNT.startingBalance,
+        status: 'active' as const,
+        userId: 'test-user',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const result = validateSchema(CreateAccountSchema, accountWithUser);
+      expect(result.success).toBe(true);
+    });
+    
+    test('should have all required category types', () => {
+      const types = DEFAULT_CATEGORIES.map(cat => cat.type);
+      
+      expect(types).toContain('income');
+      expect(types).toContain('expense');
+      expect(types).toContain('transfer');
+    });
+    
+    test('should have unique category names', () => {
+      const names = DEFAULT_CATEGORIES.map(cat => cat.name);
+      const uniqueNames = [...new Set(names)];
+      
+      expect(names.length).toBe(uniqueNames.length);
+    });
+    
+    test('should have proper sort order', () => {
+      const sortOrders = DEFAULT_CATEGORIES.map(cat => cat.sortOrder);
+      const sortedOrders = [...sortOrders].sort((a, b) => a - b);
+      
+      expect(sortOrders).toEqual(sortedOrders);
+    });
+  });
+  
+  describe('Test Data Generation', () => {
+    
+    test('should generate valid test accounts', () => {
+      const accounts = generateTestAccounts('test-user');
+      
+      accounts.forEach(account => {
+        const result = validateSchema(CreateAccountSchema, account);
+        expect(result.success).toBe(true);
+      });
+      
+      expect(accounts.length).toBeGreaterThan(0);
+      expect(accounts.some(acc => acc.type === 'checking')).toBe(true);
+      expect(accounts.some(acc => acc.type === 'savings')).toBe(true);
+    });
+    
+    test('should generate valid test categories', () => {
+      const categories = generateTestCategories('test-user');
+      
+      categories.forEach(category => {
+        const categoryWithMeta = {
+          ...category,
+          userId: 'test-user',
+          isDefault: true,
+          isSystem: false,
+          status: 'active' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const result = validateSchema(CreateCategorySchema, categoryWithMeta);
+        expect(result.success).toBe(true);
+      });
+      
+      expect(categories.length).toBeGreaterThan(10);
+    });
+    
+    test('should have unique account names in test data', () => {
+      const accounts = generateTestAccounts('test-user');
+      const names = accounts.map(acc => acc.name);
+      const uniqueNames = [...new Set(names)];
+      
+      expect(names.length).toBe(uniqueNames.length);
+    });
+  });
+  
+  describe('Sample Data Validation', () => {
+    
+    test('should have valid sample account', () => {
+      expect(SAMPLE_ACCOUNT.id).toBeTruthy();
+      expect(SAMPLE_ACCOUNT.name).toBeTruthy();
+      expect(SAMPLE_ACCOUNT.currentBalance).toBeGreaterThanOrEqual(0);
+      expect(['checking', 'savings', 'cash', 'credit', 'investment', 'other'])
+        .toContain(SAMPLE_ACCOUNT.type);
+    });
+    
+    test('should have valid sample transactions', () => {
+      SAMPLE_TRANSACTIONS.forEach(transaction => {
+        const result = validateSchema(TransactionSchema, transaction);
+        expect(result.success).toBe(true);
+        expect(transaction.amount).toBeGreaterThan(0);
+        expect(transaction.balance).toBeGreaterThanOrEqual(0);
+      });
+    });
+    
+    test('should have valid sample categories', () => {
+      SAMPLE_CATEGORIES.forEach(category => {
+        expect(category.id).toBeTruthy();
+        expect(category.name).toBeTruthy();
+        expect(['income', 'expense', 'transfer']).toContain(category.type);
+        expect(category.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      });
+    });
+  });
+  
+  describe('Utility Functions', () => {
+    
+    test('should generate unique account names', () => {
+      const existingNames = ['Checking Account', 'Checking Account 2'];
+      
+      const newName1 = generateUniqueAccountName(existingNames, 'checking');
+      expect(newName1).toBe('Checking Account 3');
+      
+      const newName2 = generateUniqueAccountName([], 'savings');
+      expect(newName2).toBe('Savings Account');
+      
+      const newName3 = generateUniqueAccountName(['Savings Account'], 'savings');
+      expect(newName3).toBe('Savings Account 2');
+    });
+    
+    test('should handle empty existing names array', () => {
+      const newName = generateUniqueAccountName([], 'checking');
+      expect(newName).toBe('Checking Account');
+    });
+    
+    test('should handle different account types', () => {
+      const types = ['checking', 'savings', 'cash', 'credit', 'investment'];
+      
+      types.forEach(type => {
+        const name = generateUniqueAccountName([], type);
+        expect(name).toContain(type.charAt(0).toUpperCase() + type.slice(1));
+        expect(name).toContain('Account');
+      });
+    });
+  });
+  
+  describe('Data Integrity Validation', () => {
+    
+    test('should provide validation utility structure', () => {
+      // Test that we have the basic validation utilities available
+      expect(typeof generateUniqueAccountName).toBe('function');
+      expect(Array.isArray(DEFAULT_CATEGORIES)).toBe(true);
+      expect(typeof DEFAULT_STARTER_ACCOUNT).toBe('object');
+    });
+  });
+  
+  describe('Data Structure Completeness', () => {
+    
+    test('should have comprehensive category coverage', () => {
+      const categories = DEFAULT_CATEGORIES;
+      
+      // Check for essential expense categories
+      const expenseCategories = categories.filter(cat => cat.type === 'expense');
+      const expenseNames = expenseCategories.map(cat => cat.name.toLowerCase());
+      
+      expect(expenseNames.some(name => name.includes('groceries') || name.includes('food'))).toBe(true);
+      expect(expenseNames.some(name => name.includes('utilities') || name.includes('electric'))).toBe(true);
+      expect(expenseNames.some(name => name.includes('rent') || name.includes('mortgage'))).toBe(true);
+      expect(expenseNames.some(name => name.includes('transport') || name.includes('car'))).toBe(true);
+      
+      // Check for essential income categories
+      const incomeCategories = categories.filter(cat => cat.type === 'income');
+      const incomeNames = incomeCategories.map(cat => cat.name.toLowerCase());
+      
+      expect(incomeNames.some(name => name.includes('salary') || name.includes('wage'))).toBe(true);
+      expect(incomeNames.some(name => name.includes('freelance') || name.includes('contract'))).toBe(true);
+      
+      // Check for transfer category
+      const transferCategories = categories.filter(cat => cat.type === 'transfer');
+      expect(transferCategories.length).toBeGreaterThan(0);
+    });
+    
+    test('should have consistent color and icon format', () => {
+      const allItems = [...DEFAULT_CATEGORIES, DEFAULT_STARTER_ACCOUNT];
+      
+      allItems.forEach(item => {
+        expect(item.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        expect(typeof item.icon).toBe('string');
+        expect(item.icon.length).toBeGreaterThan(0);
+      });
+    });
+    
+    test('should have proper currency handling', () => {
+      const accounts = generateTestAccounts('test-user');
+      
+      accounts.forEach(account => {
+        expect(account.currency).toBe('USD');
+        expect(typeof account.startingBalance).toBe('number');
+        expect(account.startingBalance).toBeGreaterThanOrEqual(0);
+      });
+    });
+  });
+  
+  describe('Migration Safety', () => {
+    
+    test('should preserve data integrity during migration', () => {
+      // Test that default data doesn't conflict with existing patterns
+      const categories = DEFAULT_CATEGORIES;
+      const accounts = generateTestAccounts('test-user');
+      
+      // No duplicate names within type
+      const incomeNames = categories.filter(c => c.type === 'income').map(c => c.name);
+      const expenseNames = categories.filter(c => c.type === 'expense').map(c => c.name);
+      
+      expect(new Set(incomeNames).size).toBe(incomeNames.length);
+      expect(new Set(expenseNames).size).toBe(expenseNames.length);
+      
+      // Account names are unique
+      const accountNames = accounts.map(a => a.name);
+      expect(new Set(accountNames).size).toBe(accountNames.length);
+    });
+    
+    test('should handle edge cases in data generation', () => {
+      // Test with edge case user IDs
+      expect(() => generateTestAccounts('')).not.toThrow();
+      expect(() => generateTestCategories('user-with-very-long-id-' + 'x'.repeat(100))).not.toThrow();
+    });
+  });
+});
+
+describe('Performance and Scalability', () => {
+  
+  test('should generate data efficiently', () => {
+    const startTime = Date.now();
+    
+    // Generate a reasonable amount of test data
+    const accounts = generateTestAccounts('test-user');
+    const categories = generateTestCategories('test-user');
+    
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    // Should complete in reasonable time (less than 100ms)
+    expect(duration).toBeLessThan(100);
+    expect(accounts.length).toBeGreaterThan(0);
+    expect(categories.length).toBeGreaterThan(0);
+  });
+  
+  test('should handle large data sets', () => {
+    // Test with larger datasets doesn't break validation
+    const largeAccountSet = Array(50).fill(null).map((_, i) => ({
+      ...generateTestAccounts('test-user')[0],
+      name: `Account ${i + 1}`
+    }));
+    
+    expect(largeAccountSet.length).toBe(50);
+    expect(largeAccountSet.every(acc => acc.name !== largeAccountSet[0].name || acc === largeAccountSet[0])).toBe(false);
+  });
+});

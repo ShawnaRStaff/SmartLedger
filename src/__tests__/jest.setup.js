@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load .env file
-const envPath = path.resolve(__dirname, '../../.env');
+const envPath = path.resolve(process.cwd(), '.env');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
   const lines = envContent.split('\n');

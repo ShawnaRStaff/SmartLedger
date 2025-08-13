@@ -2,47 +2,152 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidUser() {
+      return isAuthenticated() && 
+             request.auth.uid != null && 
+             request.auth.uid != '';
+    }
+    
+    // ========================================================================
+    // CHECK REGISTER COLLECTIONS (Phase 1)
+    // ========================================================================
+    
+    // Accounts collection - users can only access their own accounts
+    match /accounts/{accountId} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid &&
+                     request.resource.data.keys().hasAll(['name', 'type', 'startingBalance', 'currency']) &&
+                     request.resource.data.name is string &&
+                     request.resource.data.type in ['checking', 'savings', 'cash', 'credit', 'investment', 'other'] &&
+                     request.resource.data.startingBalance is number &&
+                     request.resource.data.currency is string;
+    }
+    
+    // Transactions collection - users can only access their own transactions
+    match /transactions/{transactionId} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid &&
+                     request.resource.data.keys().hasAll(['accountId', 'type', 'amount', 'description', 'categoryId', 'date']) &&
+                     request.resource.data.type in ['deposit', 'withdrawal', 'transfer'] &&
+                     request.resource.data.amount is number &&
+                     request.resource.data.amount >= 0 &&
+                     request.resource.data.description is string &&
+                     request.resource.data.accountId is string &&
+                     request.resource.data.categoryId is string;
+    }
+    
+    // Categories collection - users can access their own + system categories
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated() && 
+                   (resource.data.userId == request.auth.uid || 
+                    resource.data.isSystem == true);
+      allow write: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid &&
+                    resource.data.isSystem != true;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid &&
+                     request.resource.data.isSystem != true &&
+                     request.resource.data.keys().hasAll(['name', 'type', 'color', 'icon']) &&
+                     request.resource.data.name is string &&
+                     request.resource.data.type in ['income', 'expense', 'transfer'] &&
+                     request.resource.data.color is string &&
+                     request.resource.data.icon is string;
+    }
+    
+    // ========================================================================
+    // USER PROFILE AND SETTINGS
+    // ========================================================================
+    
     // Users can only access their own data
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
       
       // User profile data
       match /profile/{document} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
       
-      // User accounts (checking, savings, etc.)
-      match /accounts/{accountId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User transactions
-      match /transactions/{transactionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User budgets
-      match /budgets/{budgetId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User savings goals
-      match /savingsGoals/{goalId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User education progress
-      match /education/{document} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User notifications and alerts
-      match /notifications/{notificationId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // User settings and preferences
+      match /settings/{document} {
+        allow read, write: if isOwner(userId);
       }
     }
     
-    // Deny all other access
+    // User settings at top level (alternative structure)
+    match /userSettings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ========================================================================
+    // FUTURE COLLECTIONS (Phase 2+)
+    // ========================================================================
+    
+    // User budgets (Phase 2)
+    match /budgets/{budgetId} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid;
+    }
+    
+    // User savings goals (Phase 3)
+    match /savingsGoals/{goalId} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid;
+    }
+    
+    // User education progress (Phase 4)
+    match /education/{document} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid;
+    }
+    
+    // User notifications and alerts (Phase 6)
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthenticated() && 
+                          resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                     request.resource.data.userId == request.auth.uid;
+    }
+    
+    // ========================================================================
+    // SYSTEM AND PUBLIC DATA
+    // ========================================================================
+    
+    // System categories - read-only for all authenticated users
+    match /systemCategories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin/cloud functions can write
+    }
+    
+    // App configuration - read-only for all authenticated users
+    match /appConfig/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin/cloud functions can write
+    }
+    
+    // ========================================================================
+    // SECURITY: DENY ALL OTHER ACCESS
+    // ========================================================================
+    
+    // Explicitly deny all other access
     match /{document=**} {
       allow read, write: if false;
     }
