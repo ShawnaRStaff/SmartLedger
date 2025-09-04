@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 export interface FormField {
   value: string;
@@ -44,7 +44,10 @@ const defaultValidationRules: ValidationRules = {
   },
 };
 
-export function useAuthForm(includeConfirmPassword = false, includeDisplayName = false) {
+export function useAuthForm(
+  includeConfirmPassword = false,
+  includeDisplayName = false
+) {
   const [formData, setFormData] = useState<AuthFormData>(() => ({
     email: { value: '', error: null, touched: false },
     password: { value: '', error: null, touched: false },
@@ -56,132 +59,155 @@ export function useAuthForm(includeConfirmPassword = false, includeDisplayName =
     }),
   }));
 
-  const validationRules: ValidationRules = {
-    ...defaultValidationRules,
-    ...(includeConfirmPassword && {
-      confirmPassword: {
-        required: true,
-        mustMatch: 'password',
-      },
-    }),
-    ...(includeDisplayName && {
-      displayName: {
-        required: true,
-        minLength: 2,
-        maxLength: 50,
-      },
-    }),
-  };
-
-  const validateField = useCallback((fieldName: keyof AuthFormData, value: string): string | null => {
-    const rules = validationRules[fieldName];
-    if (!rules) return null;
-
-    // Required validation
-    if (rules.required && !value.trim()) {
-      return `${getFieldLabel(fieldName)} is required`;
-    }
-
-    // Skip other validations if field is empty and not required
-    if (!value.trim()) return null;
-
-    // Email pattern validation
-    if (fieldName === 'email' && 'pattern' in rules) {
-      if (!rules.pattern.test(value)) {
-        return 'Please enter a valid email address';
-      }
-    }
-
-    // Password minimum length
-    if (fieldName === 'password' && 'minLength' in rules) {
-      if (value.length < rules.minLength) {
-        return `Password must be at least ${rules.minLength} characters`;
-      }
-    }
-
-    // Display name length validation
-    if (fieldName === 'displayName' && 'minLength' in rules && 'maxLength' in rules) {
-      if (value.length < rules.minLength) {
-        return `Name must be at least ${rules.minLength} characters`;
-      }
-      if (value.length > rules.maxLength) {
-        return `Name cannot exceed ${rules.maxLength} characters`;
-      }
-    }
-
-    // Confirm password match validation
-    if (fieldName === 'confirmPassword' && 'mustMatch' in rules) {
-      const passwordValue = formData[rules.mustMatch as keyof AuthFormData]?.value || '';
-      if (value !== passwordValue) {
-        return 'Passwords do not match';
-      }
-    }
-
-    return null;
-  }, [formData, validationRules]);
-
-  const updateField = useCallback((fieldName: keyof AuthFormData, value: string) => {
-    setFormData(prev => {
-      const currentField = prev[fieldName];
-      if (!currentField) return prev;
-
-      const error = validateField(fieldName, value);
-      
-      const newFormData = {
-        ...prev,
-        [fieldName]: {
-          ...currentField,
-          value,
-          error: currentField.touched ? error : null,
+  const validationRules: ValidationRules = useMemo(
+    () => ({
+      ...defaultValidationRules,
+      ...(includeConfirmPassword && {
+        confirmPassword: {
+          required: true,
+          mustMatch: 'password',
         },
-      };
+      }),
+      ...(includeDisplayName && {
+        displayName: {
+          required: true,
+          minLength: 2,
+          maxLength: 50,
+        },
+      }),
+    }),
+    [includeConfirmPassword, includeDisplayName]
+  );
 
-      // If this is password field and we have confirmPassword, re-validate confirmPassword
-      if (fieldName === 'password' && prev.confirmPassword) {
-        const confirmPasswordError = validateField('confirmPassword', prev.confirmPassword.value);
-        newFormData.confirmPassword = {
-          ...prev.confirmPassword,
-          error: prev.confirmPassword.touched ? confirmPasswordError : null,
+  const validateField = useCallback(
+    (fieldName: keyof AuthFormData, value: string): string | null => {
+      const rules = validationRules[fieldName];
+      if (!rules) return null;
+
+      // Required validation
+      if (rules.required && !value.trim()) {
+        return `${getFieldLabel(fieldName)} is required`;
+      }
+
+      // Skip other validations if field is empty and not required
+      if (!value.trim()) return null;
+
+      // Email pattern validation
+      if (fieldName === 'email' && 'pattern' in rules) {
+        if (!rules.pattern.test(value)) {
+          return 'Please enter a valid email address';
+        }
+      }
+
+      // Password minimum length
+      if (fieldName === 'password' && 'minLength' in rules) {
+        if (value.length < rules.minLength) {
+          return `Password must be at least ${rules.minLength} characters`;
+        }
+      }
+
+      // Display name length validation
+      if (
+        fieldName === 'displayName' &&
+        'minLength' in rules &&
+        'maxLength' in rules
+      ) {
+        if (value.length < rules.minLength) {
+          return `Name must be at least ${rules.minLength} characters`;
+        }
+        if (value.length > rules.maxLength) {
+          return `Name cannot exceed ${rules.maxLength} characters`;
+        }
+      }
+
+      // Confirm password match validation
+      if (fieldName === 'confirmPassword' && 'mustMatch' in rules) {
+        const passwordValue =
+          formData[rules.mustMatch as keyof AuthFormData]?.value || '';
+        if (value !== passwordValue) {
+          return 'Passwords do not match';
+        }
+      }
+
+      return null;
+    },
+    [formData, validationRules]
+  );
+
+  const updateField = useCallback(
+    (fieldName: keyof AuthFormData, value: string) => {
+      setFormData((prev) => {
+        const currentField = prev[fieldName];
+        if (!currentField) return prev;
+
+        const error = validateField(fieldName, value);
+
+        const newFormData = {
+          ...prev,
+          [fieldName]: {
+            ...currentField,
+            value,
+            error: currentField.touched ? error : null,
+          },
         };
-      }
 
-      return newFormData;
-    });
-  }, [validateField]);
+        // If this is password field and we have confirmPassword, re-validate confirmPassword
+        if (fieldName === 'password' && prev.confirmPassword) {
+          const confirmPasswordError = validateField(
+            'confirmPassword',
+            prev.confirmPassword.value
+          );
+          newFormData.confirmPassword = {
+            ...prev.confirmPassword,
+            error: prev.confirmPassword.touched ? confirmPasswordError : null,
+          };
+        }
 
-  const touchField = useCallback((fieldName: keyof AuthFormData) => {
-    setFormData(prev => {
-      const currentField = prev[fieldName];
-      if (!currentField) return prev;
+        return newFormData;
+      });
+    },
+    [validateField]
+  );
 
-      const error = validateField(fieldName, currentField.value);
+  const touchField = useCallback(
+    (fieldName: keyof AuthFormData) => {
+      setFormData((prev) => {
+        const currentField = prev[fieldName];
+        if (!currentField) return prev;
 
-      return {
-        ...prev,
-        [fieldName]: {
-          ...currentField,
-          touched: true,
-          error,
-        },
-      };
-    });
-  }, [validateField]);
+        const error = validateField(fieldName, currentField.value);
+
+        return {
+          ...prev,
+          [fieldName]: {
+            ...currentField,
+            touched: true,
+            error,
+          },
+        };
+      });
+    },
+    [validateField]
+  );
 
   const validateForm = useCallback((): boolean => {
     let isValid = true;
     const newFormData = { ...formData };
 
     // Validate all fields
-    Object.keys(formData).forEach(fieldName => {
+    Object.keys(formData).forEach((fieldName) => {
       const field = formData[fieldName as keyof AuthFormData];
       if (field) {
-        const error = validateField(fieldName as keyof AuthFormData, field.value);
+        const error = validateField(
+          fieldName as keyof AuthFormData,
+          field.value
+        );
         newFormData[fieldName as keyof AuthFormData] = {
           ...field,
           touched: true,
           error,
         };
-        
+
         if (error) {
           isValid = false;
         }
@@ -205,16 +231,21 @@ export function useAuthForm(includeConfirmPassword = false, includeDisplayName =
     });
   }, [includeConfirmPassword, includeDisplayName]);
 
-  const getFormValues = useCallback(() => ({
-    email: formData.email.value,
-    password: formData.password.value,
-    ...(formData.confirmPassword && { confirmPassword: formData.confirmPassword.value }),
-    ...(formData.displayName && { displayName: formData.displayName.value }),
-  }), [formData]);
+  const getFormValues = useCallback(
+    () => ({
+      email: formData.email.value,
+      password: formData.password.value,
+      ...(formData.confirmPassword && {
+        confirmPassword: formData.confirmPassword.value,
+      }),
+      ...(formData.displayName && { displayName: formData.displayName.value }),
+    }),
+    [formData]
+  );
 
   const isFormValid = useCallback((): boolean => {
-    return Object.values(formData).every(field => 
-      field && !field.error && field.value.trim() !== ''
+    return Object.values(formData).every(
+      (field) => field && !field.error && field.value.trim() !== ''
     );
   }, [formData]);
 

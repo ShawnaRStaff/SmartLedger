@@ -5,9 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { Typography, useTheme } from '@/design-system';
 import type { Account } from '../../types';
 
 // ============================================================================
@@ -33,7 +31,7 @@ const formatCurrency = (amount: number, currency: string = 'USD'): string => {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 
@@ -44,7 +42,7 @@ const getAccountTypeLabel = (type: string): string => {
     cash: 'Cash',
     credit: 'Credit Card',
     investment: 'Investment',
-    other: 'Other'
+    other: 'Other',
   };
   return labels[type] || type;
 };
@@ -53,7 +51,7 @@ const getAccountStatusColor = (status: string): string => {
   const colors: Record<string, string> = {
     active: '#4CAF50',
     inactive: '#FF9800',
-    closed: '#F44336'
+    closed: '#F44336',
   };
   return colors[status] || '#757575';
 };
@@ -69,13 +67,9 @@ export const AccountCard: React.FC<AccountCardProps> = ({
   onDelete,
   showActions = false,
   compact = false,
-  testID
+  testID,
 }) => {
-  const backgroundColor = useThemeColor({}, 'background');
-  const cardBackgroundColor = useThemeColor({}, 'card');
-  const borderColor = useThemeColor({}, 'border');
-  const textColor = useThemeColor({}, 'text');
-  const secondaryTextColor = useThemeColor({}, 'textSecondary');
+  const theme = useTheme();
 
   const handlePress = () => {
     onPress?.(account);
@@ -94,7 +88,10 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       <Pressable
         style={[
           styles.compactCard,
-          { backgroundColor: cardBackgroundColor, borderColor }
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
         ]}
         onPress={handlePress}
         testID={testID}
@@ -103,22 +100,36 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       >
         <View style={styles.compactHeader}>
           <View style={styles.compactInfo}>
-            <ThemedText style={styles.compactName} numberOfLines={1}>
+            <Typography
+              variant="subtitle2"
+              style={styles.compactName}
+              numberOfLines={1}
+            >
               {account.name}
-            </ThemedText>
-            <ThemedText style={[styles.compactType, { color: secondaryTextColor }]}>
+            </Typography>
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              style={styles.compactType}
+            >
               {getAccountTypeLabel(account.type)}
-            </ThemedText>
+            </Typography>
           </View>
           <View style={styles.compactBalance}>
-            <ThemedText 
+            <Typography
+              variant="subtitle1"
               style={[
                 styles.balanceAmount,
-                { color: account.currentBalance >= 0 ? '#4CAF50' : '#F44336' }
+                {
+                  color:
+                    account.currentBalance >= 0
+                      ? theme.colors.success
+                      : theme.colors.error,
+                },
               ]}
             >
               {formatCurrency(account.currentBalance, account.currency)}
-            </ThemedText>
+            </Typography>
           </View>
         </View>
       </Pressable>
@@ -129,7 +140,10 @@ export const AccountCard: React.FC<AccountCardProps> = ({
     <Pressable
       style={[
         styles.card,
-        { backgroundColor: cardBackgroundColor, borderColor }
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
       ]}
       onPress={handlePress}
       testID={testID}
@@ -140,13 +154,13 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       <View style={styles.header}>
         <View style={styles.accountInfo}>
           <View style={styles.titleRow}>
-            <ThemedText style={styles.accountName}>
+            <Typography variant="h4" style={styles.accountName}>
               {account.name}
-            </ThemedText>
+            </Typography>
             <View
               style={[
                 styles.statusBadge,
-                { backgroundColor: getAccountStatusColor(account.status) }
+                { backgroundColor: getAccountStatusColor(account.status) },
               ]}
             >
               <Text style={styles.statusText}>
@@ -154,39 +168,61 @@ export const AccountCard: React.FC<AccountCardProps> = ({
               </Text>
             </View>
           </View>
-          
-          <ThemedText style={[styles.accountType, { color: secondaryTextColor }]}>
+
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            style={styles.accountType}
+          >
             {getAccountTypeLabel(account.type)}
             {account.institution && ` • ${account.institution}`}
             {account.accountNumber && ` • ••••${account.accountNumber}`}
-          </ThemedText>
+          </Typography>
         </View>
       </View>
 
       {/* Balance Section */}
       <View style={styles.balanceSection}>
         <View style={styles.balanceRow}>
-          <ThemedText style={[styles.balanceLabel, { color: secondaryTextColor }]}>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            style={styles.balanceLabel}
+          >
             Current Balance
-          </ThemedText>
-          <ThemedText 
+          </Typography>
+          <Typography
+            variant="h5"
             style={[
               styles.balanceAmount,
-              { color: account.currentBalance >= 0 ? '#4CAF50' : '#F44336' }
+              {
+                color:
+                  account.currentBalance >= 0
+                    ? theme.colors.success
+                    : theme.colors.error,
+              },
             ]}
           >
             {formatCurrency(account.currentBalance, account.currency)}
-          </ThemedText>
+          </Typography>
         </View>
-        
+
         {account.startingBalance !== account.currentBalance && (
           <View style={styles.balanceRow}>
-            <ThemedText style={[styles.balanceLabel, { color: secondaryTextColor }]}>
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              style={styles.balanceLabel}
+            >
               Starting Balance
-            </ThemedText>
-            <ThemedText style={[styles.startingBalance, { color: secondaryTextColor }]}>
+            </Typography>
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              style={styles.startingBalance}
+            >
               {formatCurrency(account.startingBalance, account.currency)}
-            </ThemedText>
+            </Typography>
           </View>
         )}
       </View>
@@ -194,41 +230,69 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       {/* Description */}
       {account.description && (
         <View style={styles.descriptionSection}>
-          <ThemedText style={[styles.description, { color: secondaryTextColor }]}>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            style={styles.description}
+          >
             {account.description}
-          </ThemedText>
+          </Typography>
         </View>
       )}
 
       {/* Metadata */}
       <View style={styles.metadataSection}>
         <View style={styles.metadataRow}>
-          <ThemedText style={[styles.metadataLabel, { color: secondaryTextColor }]}>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            style={styles.metadataLabel}
+          >
             Transactions
-          </ThemedText>
-          <ThemedText style={[styles.metadataValue, { color: secondaryTextColor }]}>
+          </Typography>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            style={styles.metadataValue}
+          >
             {account.transactionCount || 0}
-          </ThemedText>
+          </Typography>
         </View>
-        
+
         {account.lastTransactionDate && (
           <View style={styles.metadataRow}>
-            <ThemedText style={[styles.metadataLabel, { color: secondaryTextColor }]}>
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              style={styles.metadataLabel}
+            >
               Last Activity
-            </ThemedText>
-            <ThemedText style={[styles.metadataValue, { color: secondaryTextColor }]}>
+            </Typography>
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              style={styles.metadataValue}
+            >
               {new Date(account.lastTransactionDate).toLocaleDateString()}
-            </ThemedText>
+            </Typography>
           </View>
         )}
 
         <View style={styles.metadataRow}>
-          <ThemedText style={[styles.metadataLabel, { color: secondaryTextColor }]}>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            style={styles.metadataLabel}
+          >
             Include in Totals
-          </ThemedText>
-          <ThemedText style={[styles.metadataValue, { color: secondaryTextColor }]}>
+          </Typography>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            style={styles.metadataValue}
+          >
             {account.includeInTotals ? 'Yes' : 'No'}
-          </ThemedText>
+          </Typography>
         </View>
       </View>
 
@@ -244,7 +308,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
           >
             <Text style={styles.editButtonText}>Edit</Text>
           </Pressable>
-          
+
           <Pressable
             style={[styles.actionButton, styles.deleteButton]}
             onPress={handleDelete}
@@ -279,134 +343,134 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  
+
   compactCard: {
     borderRadius: 8,
     borderWidth: 1,
     padding: 12,
     marginVertical: 4,
   },
-  
+
   header: {
     marginBottom: 12,
   },
-  
+
   compactHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  
+
   accountInfo: {
     flex: 1,
   },
-  
+
   compactInfo: {
     flex: 1,
   },
-  
+
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  
+
   accountName: {
     fontSize: 18,
     fontWeight: '600',
     flex: 1,
   },
-  
+
   compactName: {
     fontSize: 16,
     fontWeight: '600',
   },
-  
+
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
     marginLeft: 8,
   },
-  
+
   statusText: {
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '600',
   },
-  
+
   accountType: {
     fontSize: 14,
   },
-  
+
   compactType: {
     fontSize: 12,
   },
-  
+
   balanceSection: {
     marginBottom: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  
+
   balanceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  
+
   balanceLabel: {
     fontSize: 14,
   },
-  
+
   balanceAmount: {
     fontSize: 20,
     fontWeight: '700',
   },
-  
+
   compactBalance: {
     alignItems: 'flex-end',
   },
-  
+
   startingBalance: {
     fontSize: 14,
   },
-  
+
   descriptionSection: {
     marginBottom: 12,
   },
-  
+
   description: {
     fontSize: 14,
     fontStyle: 'italic',
   },
-  
+
   metadataSection: {
     marginBottom: 12,
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  
+
   metadataRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  
+
   metadataLabel: {
     fontSize: 12,
   },
-  
+
   metadataValue: {
     fontSize: 12,
     fontWeight: '500',
   },
-  
+
   actionsSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -414,7 +478,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
-  
+
   actionButton: {
     flex: 1,
     paddingVertical: 8,
@@ -423,21 +487,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     alignItems: 'center',
   },
-  
+
   editButton: {
     backgroundColor: '#2196F3',
   },
-  
+
   deleteButton: {
     backgroundColor: '#F44336',
   },
-  
+
   editButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
-  
+
   deleteButtonText: {
     color: '#FFFFFF',
     fontSize: 14,

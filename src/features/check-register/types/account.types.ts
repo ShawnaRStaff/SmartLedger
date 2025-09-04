@@ -7,7 +7,13 @@
 // CORE ACCOUNT TYPES
 // ============================================================================
 
-export type AccountType = 'checking' | 'savings' | 'cash' | 'credit' | 'investment' | 'other';
+export type AccountType =
+  | 'checking'
+  | 'savings'
+  | 'cash'
+  | 'credit'
+  | 'investment'
+  | 'other';
 export type AccountStatus = 'active' | 'inactive' | 'closed';
 
 /**
@@ -16,56 +22,56 @@ export type AccountStatus = 'active' | 'inactive' | 'closed';
 export interface Account {
   /** Unique account identifier */
   id: string;
-  
+
   /** User-defined account name */
   name: string;
-  
+
   /** Type of account */
   type: AccountType;
-  
+
   /** Starting balance when account was created */
   startingBalance: number;
-  
+
   /** Current calculated balance */
   currentBalance: number;
-  
+
   /** Currency code (USD, EUR, etc.) */
   currency: string;
-  
+
   /** Account status */
   status: AccountStatus;
-  
+
   /** Account description/notes */
   description?: string;
-  
+
   /** Institution name (bank, credit union, etc.) */
   institution?: string;
-  
+
   /** Account number (last 4 digits for security) */
   accountNumber?: string;
-  
+
   /** Display order for sorting */
   sortOrder: number;
-  
+
   /** Whether to include in dashboard totals */
   includeInTotals: boolean;
-  
+
   /** Account color for visual identification */
   color: string;
-  
+
   /** Account icon identifier */
   icon: string;
-  
+
   /** Metadata timestamps */
   createdAt: Date;
   updatedAt: Date;
-  
+
   /** User who owns this account */
   userId: string;
-  
+
   /** Number of transactions in account */
   transactionCount: number;
-  
+
   /** Date of last transaction */
   lastTransactionDate?: Date;
 }
@@ -113,19 +119,19 @@ export interface UpdateAccountInput {
 export interface AccountWithBalance extends Account {
   /** Formatted current balance */
   formattedBalance: string;
-  
+
   /** Formatted starting balance */
   formattedStartingBalance: string;
-  
+
   /** Total change from starting balance */
   balanceChange: number;
-  
+
   /** Formatted balance change */
   formattedBalanceChange: string;
-  
+
   /** Whether balance has increased/decreased */
   balanceDirection: 'up' | 'down' | 'neutral';
-  
+
   /** Formatted last transaction date */
   formattedLastTransactionDate?: string;
 }
@@ -140,17 +146,17 @@ export interface AccountWithBalance extends Account {
 export interface AccountSummary {
   /** Account information */
   account: AccountWithBalance;
-  
+
   /** Recent transactions (last 5) */
-  recentTransactions: Array<{
+  recentTransactions: {
     id: string;
     amount: number;
     description: string;
     date: Date;
     formattedAmount: string;
     formattedDate: string;
-  }>;
-  
+  }[];
+
   /** Monthly statistics */
   monthlyStats: {
     totalDeposits: number;
@@ -161,7 +167,7 @@ export interface AccountSummary {
     formattedWithdrawals: string;
     formattedNetChange: string;
   };
-  
+
   /** Account health indicators */
   health: {
     isOverdrawn: boolean;
@@ -213,23 +219,28 @@ export interface AccountTypeConfig {
  * Account color and icon options
  */
 export interface AccountCustomizationOptions {
-  colors: Array<{
+  colors: {
     value: string;
     name: string;
     hex: string;
-  }>;
-  icons: Array<{
+  }[];
+  icons: {
     value: string;
     name: string;
     component: string;
-  }>;
+  }[];
 }
 
 // ============================================================================
 // QUERY TYPES
 // ============================================================================
 
-export type AccountSortField = 'name' | 'type' | 'balance' | 'lastTransaction' | 'created';
+export type AccountSortField =
+  | 'name'
+  | 'type'
+  | 'balance'
+  | 'lastTransaction'
+  | 'created';
 
 /**
  * Account query filters
@@ -237,19 +248,19 @@ export type AccountSortField = 'name' | 'type' | 'balance' | 'lastTransaction' |
 export interface AccountFilters {
   /** Filter by account type */
   types?: AccountType[];
-  
+
   /** Filter by status */
   statuses?: AccountStatus[];
-  
+
   /** Search account names */
   searchText?: string;
-  
+
   /** Filter by balance range */
   balanceRange?: {
     minBalance: number;
     maxBalance: number;
   };
-  
+
   /** Only include accounts in totals */
   includeInTotalsOnly?: boolean;
 }
@@ -260,16 +271,16 @@ export interface AccountFilters {
 export interface AccountQueryOptions {
   /** Include inactive accounts */
   includeInactive?: boolean;
-  
+
   /** Sort configuration */
   sort?: {
     field: AccountSortField;
     direction: 'asc' | 'desc';
   };
-  
+
   /** Include balance calculations */
   includeBalances?: boolean;
-  
+
   /** Include transaction counts */
   includeTransactionCounts?: boolean;
 }

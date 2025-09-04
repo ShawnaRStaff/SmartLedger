@@ -28,11 +28,16 @@ export const db = getFirestore(app);
 if (__DEV__ && process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATORS === 'true') {
   // Connect to emulators if not already connected
   try {
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectAuthEmulator(auth, 'http://localhost:9099', {
+      disableWarnings: true,
+    });
     connectFirestoreEmulator(db, 'localhost', 8080);
-  } catch (error) {
+  } catch (emulatorError) {
     // Emulators may already be connected
-    console.log('Firebase emulators already connected or not available');
+    console.log(
+      'Firebase emulators already connected or not available',
+      emulatorError
+    );
   }
 }
 

@@ -1,7 +1,15 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, StyleSheet } from 'react-native';
 import { lightColors, darkColors, ColorScheme } from './colors';
-import { spacing, typography, borderRadius, shadows, layout, opacity, animation } from './tokens';
+import {
+  spacing,
+  typography,
+  borderRadius,
+  shadows,
+  layout,
+  opacity,
+  animation,
+} from './tokens';
 
 // ============================================================================
 // THEME TYPE DEFINITION
@@ -58,9 +66,12 @@ interface ThemeProviderProps {
   theme?: 'light' | 'dark' | 'auto';
 }
 
-export function ThemeProvider({ children, theme = 'auto' }: ThemeProviderProps) {
+export function ThemeProvider({
+  children,
+  theme = 'auto',
+}: ThemeProviderProps) {
   const systemColorScheme = useColorScheme();
-  
+
   const currentTheme = React.useMemo(() => {
     if (theme === 'auto') {
       return systemColorScheme === 'dark' ? darkTheme : lightTheme;
@@ -106,18 +117,13 @@ export function useThemeValues<T extends keyof Theme>(
 ): Pick<Theme, T> {
   const theme = useTheme();
   const result = {} as Pick<Theme, T>;
-  
-  keys.forEach(key => {
+
+  keys.forEach((key) => {
     result[key] = theme[key];
   });
-  
+
   return result;
 }
-
-// ============================================================================
-// STYLE SHEET HELPER
-// ============================================================================
-import { StyleSheet } from 'react-native';
 
 /**
  * Create a themed stylesheet
@@ -129,14 +135,7 @@ export function createThemedStyles<T extends StyleSheet.NamedStyles<T>>(
     const theme = useTheme();
     return React.useMemo(() => {
       return StyleSheet.create(stylesFn(theme));
-    }, [
-      theme.colors,
-      theme.spacing, 
-      theme.typography,
-      theme.borderRadius,
-      theme.shadows,
-      theme.isDark
-    ]);
+    }, [theme]);
   };
 }
 

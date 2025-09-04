@@ -11,17 +11,17 @@ import {
   StyleSheet,
   Alert,
   RefreshControl,
-  Modal
+  Modal,
 } from 'react-native';
-import { Typography, createThemedStyles } from '@/design-system';
+import { Typography, useTheme } from '@/design-system';
 import { useAccounts } from '../../hooks/useAccounts';
 import { AccountCard } from '../presentational/AccountCard';
 import { AccountForm } from '../presentational/AccountForm';
-import type { 
-  Account, 
-  CreateAccountInput, 
+import type {
+  Account,
+  CreateAccountInput,
   UpdateAccountInput,
-  AccountType 
+  AccountType,
 } from '../../types';
 
 // ============================================================================
@@ -46,17 +46,10 @@ interface ScreenState {
 // MAIN COMPONENT
 // ============================================================================
 
-export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = ({
-  userId,
-  onAccountSelect,
-  testID = 'account-management-screen'
-}) => {
-  const backgroundColor = useThemeColor({}, 'background');
-  const cardBackgroundColor = useThemeColor({}, 'card');
-  const borderColor = useThemeColor({}, 'border');
-  const textColor = useThemeColor({}, 'text');
-  const secondaryTextColor = useThemeColor({}, 'textSecondary');
-  const primaryColor = useThemeColor({}, 'tint');
+export const AccountManagementScreen: React.FC<
+  AccountManagementScreenProps
+> = ({ userId, onAccountSelect, testID = 'account-management-screen' }) => {
+  const theme = useTheme();
 
   // ============================================================================
   // STATE MANAGEMENT
@@ -67,7 +60,7 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
     showEditModal: false,
     selectedAccount: null,
     showFilters: false,
-    refreshing: false
+    refreshing: false,
   });
 
   const {
@@ -81,10 +74,10 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
     deleteAccount,
     refreshAccounts,
     filterAccounts,
-    searchAccounts,
+    // searchAccounts, // Currently unused
     clearFilters,
     initializeUser,
-    clearError
+    clearError,
   } = useAccounts({
     userId,
     autoRefresh: true,
@@ -99,80 +92,100 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
     },
     onError: (error) => {
       Alert.alert('Error', error);
-    }
+    },
   });
 
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
 
-  const handleCreateAccount = useCallback(async (accountData: CreateAccountInput) => {
-    const newAccount = await createAccount(accountData);
-    if (newAccount) {
-      setScreenState(prev => ({ ...prev, showCreateModal: false }));
-      Alert.alert('Success', 'Account created successfully!');
-    }
-  }, [createAccount]);
-
-  const handleUpdateAccount = useCallback(async (updates: UpdateAccountInput) => {
-    if (!screenState.selectedAccount) return;
-
-    const updatedAccount = await updateAccount(screenState.selectedAccount.id, updates);
-    if (updatedAccount) {
-      setScreenState(prev => ({ 
-        ...prev, 
-        showEditModal: false, 
-        selectedAccount: null 
-      }));
-      Alert.alert('Success', 'Account updated successfully!');
-    }
-  }, [updateAccount, screenState.selectedAccount]);
-
-  const handleDeleteAccount = useCallback((account: Account) => {
-    Alert.alert(
-      'Delete Account',
-      `Are you sure you want to delete "${account.name}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const success = await deleteAccount(account.id);
-            if (success) {
-              Alert.alert('Success', 'Account deleted successfully!');
-            }
-          }
+  const handleCreateAccount = useCallback(
+    async (accountData: CreateAccountInput | UpdateAccountInput) => {
+      // Type guard to ensure we have required fields for creation
+      if ('startingBalance' in accountData) {
+        const newAccount = await createAccount(
+          accountData as CreateAccountInput
+        );
+        if (newAccount) {
+          setScreenState((prev) => ({ ...prev, showCreateModal: false }));
+          Alert.alert('Success', 'Account created successfully!');
         }
-      ]
-    );
-  }, [deleteAccount]);
+      }
+    },
+    [createAccount]
+  );
 
-  const handleAccountPress = useCallback((account: Account) => {
-    if (onAccountSelect) {
-      onAccountSelect(account);
-    } else {
-      // Default behavior: show account details or edit
-      setScreenState(prev => ({ 
-        ...prev, 
-        selectedAccount: account, 
-        showEditModal: true 
-      }));
-    }
-  }, [onAccountSelect]);
+  const handleUpdateAccount = useCallback(
+    async (updates: UpdateAccountInput) => {
+      if (!screenState.selectedAccount) return;
+
+      const updatedAccount = await updateAccount(
+        screenState.selectedAccount.id,
+        updates
+      );
+      if (updatedAccount) {
+        setScreenState((prev) => ({
+          ...prev,
+          showEditModal: false,
+          selectedAccount: null,
+        }));
+        Alert.alert('Success', 'Account updated successfully!');
+      }
+    },
+    [updateAccount, screenState.selectedAccount]
+  );
+
+  const handleDeleteAccount = useCallback(
+    (account: Account) => {
+      Alert.alert(
+        'Delete Account',
+        `Are you sure you want to delete "${account.name}"? This action cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              const success = await deleteAccount(account.id);
+              if (success) {
+                Alert.alert('Success', 'Account deleted successfully!');
+              }
+            },
+          },
+        ]
+      );
+    },
+    [deleteAccount]
+  );
+
+  const handleAccountPress = useCallback(
+    (account: Account) => {
+      if (onAccountSelect) {
+        onAccountSelect(account);
+      } else {
+        // Default behavior: show account details or edit
+        setScreenState((prev) => ({
+          ...prev,
+          selectedAccount: account,
+          showEditModal: true,
+        }));
+      }
+    },
+    [onAccountSelect]
+  );
 
   const handleEditAccount = useCallback((account: Account) => {
-    setScreenState(prev => ({ 
-      ...prev, 
-      selectedAccount: account, 
-      showEditModal: true 
+    setScreenState((prev) => ({
+      ...prev,
+      selectedAccount: account,
+      showEditModal: true,
     }));
   }, []);
 
   const handleRefresh = useCallback(async () => {
-    setScreenState(prev => ({ ...prev, refreshing: true }));
+    setScreenState((prev) => ({ ...prev, refreshing: true }));
     await refreshAccounts();
-    setScreenState(prev => ({ ...prev, refreshing: false }));
+    setScreenState((prev) => ({ ...prev, refreshing: false }));
   }, [refreshAccounts]);
 
   const handleInitializeUser = useCallback(async () => {
@@ -188,18 +201,18 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
             if (success) {
               Alert.alert('Success', 'Account initialized successfully!');
             }
-          }
-        }
+          },
+        },
       ]
     );
   }, [initializeUser]);
 
   const handleCloseModals = useCallback(() => {
-    setScreenState(prev => ({
+    setScreenState((prev) => ({
       ...prev,
       showCreateModal: false,
       showEditModal: false,
-      selectedAccount: null
+      selectedAccount: null,
     }));
   }, []);
 
@@ -207,9 +220,12 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
   // FILTER HANDLERS
   // ============================================================================
 
-  const handleFilterByType = useCallback((type: AccountType) => {
-    filterAccounts({ types: [type] });
-  }, [filterAccounts]);
+  const handleFilterByType = useCallback(
+    (type: AccountType) => {
+      filterAccounts({ types: [type] });
+    },
+    [filterAccounts]
+  );
 
   const handleShowActiveOnly = useCallback(() => {
     filterAccounts({ statuses: ['active'] });
@@ -236,34 +252,45 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText style={[styles.emptyStateTitle, { color: textColor }]}>
+      <Typography variant="h3" style={styles.emptyStateTitle}>
         No Accounts Found
-      </ThemedText>
-      <ThemedText style={[styles.emptyStateMessage, { color: secondaryTextColor }]}>
-        {!initialized 
+      </Typography>
+      <Typography
+        variant="body1"
+        color="textSecondary"
+        style={styles.emptyStateMessage}
+      >
+        {!initialized
           ? 'Get started by initializing your account with default settings.'
-          : 'Create your first account to start tracking your finances.'
-        }
-      </ThemedText>
+          : 'Create your first account to start tracking your finances.'}
+      </Typography>
       {!initialized ? (
         <Pressable
-          style={[styles.initializeButton, { backgroundColor: primaryColor }]}
+          style={[
+            styles.initializeButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
           onPress={handleInitializeUser}
           testID={`${testID}-initialize`}
         >
-          <ThemedText style={styles.initializeButtonText}>
+          <Typography variant="button" style={styles.initializeButtonText}>
             Initialize Account
-          </ThemedText>
+          </Typography>
         </Pressable>
       ) : (
         <Pressable
-          style={[styles.createButton, { backgroundColor: primaryColor }]}
-          onPress={() => setScreenState(prev => ({ ...prev, showCreateModal: true }))}
+          style={[
+            styles.createButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
+          onPress={() =>
+            setScreenState((prev) => ({ ...prev, showCreateModal: true }))
+          }
           testID={`${testID}-create-first`}
         >
-          <ThemedText style={styles.createButtonText}>
+          <Typography variant="button" style={styles.createButtonText}>
             Create Account
-          </ThemedText>
+          </Typography>
         </Pressable>
       )}
     </View>
@@ -273,70 +300,115 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
     if (!summary) return null;
 
     return (
-      <View style={[styles.summaryCard, { backgroundColor: cardBackgroundColor, borderColor }]}>
-        <ThemedText style={styles.summaryTitle}>Account Summary</ThemedText>
-        
+      <View
+        style={[
+          styles.summaryCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
+        <Typography variant="h4" style={styles.summaryTitle}>
+          Account Summary
+        </Typography>
+
         <View style={styles.summaryRow}>
-          <ThemedText style={[styles.summaryLabel, { color: secondaryTextColor }]}>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            style={styles.summaryLabel}
+          >
             Total Balance
-          </ThemedText>
-          <ThemedText style={[styles.summaryAmount, { color: primaryColor }]}>
-            ${summary.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </ThemedText>
+          </Typography>
+          <Typography
+            variant="h5"
+            style={[styles.summaryAmount, { color: theme.colors.primary }]}
+          >
+            $
+            {summary.totalBalance.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+            })}
+          </Typography>
         </View>
-        
+
         <View style={styles.summaryRow}>
-          <ThemedText style={[styles.summaryLabel, { color: secondaryTextColor }]}>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            style={styles.summaryLabel}
+          >
             Active Accounts
-          </ThemedText>
-          <ThemedText style={[styles.summaryValue, { color: textColor }]}>
+          </Typography>
+          <Typography variant="body2" style={styles.summaryValue}>
             {summary.activeAccounts} of {summary.totalAccounts}
-          </ThemedText>
+          </Typography>
         </View>
       </View>
     );
   };
 
   const renderFilterBar = () => (
-    <View style={[styles.filterBar, { backgroundColor: cardBackgroundColor, borderColor }]}>
+    <View
+      style={[
+        styles.filterBar,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
+    >
       <Pressable
-        style={[styles.filterButton, { borderColor }]}
+        style={[styles.filterButton, { borderColor: theme.colors.border }]}
         onPress={handleShowActiveOnly}
         testID={`${testID}-filter-active`}
       >
-        <ThemedText style={[styles.filterButtonText, { color: primaryColor }]}>
+        <Typography
+          variant="caption"
+          style={[styles.filterButtonText, { color: theme.colors.primary }]}
+        >
           Active Only
-        </ThemedText>
+        </Typography>
       </Pressable>
-      
+
       <Pressable
-        style={[styles.filterButton, { borderColor }]}
+        style={[styles.filterButton, { borderColor: theme.colors.border }]}
         onPress={() => handleFilterByType('checking')}
         testID={`${testID}-filter-checking`}
       >
-        <ThemedText style={[styles.filterButtonText, { color: primaryColor }]}>
+        <Typography
+          variant="caption"
+          style={[styles.filterButtonText, { color: theme.colors.primary }]}
+        >
           Checking
-        </ThemedText>
+        </Typography>
       </Pressable>
-      
+
       <Pressable
-        style={[styles.filterButton, { borderColor }]}
+        style={[styles.filterButton, { borderColor: theme.colors.border }]}
         onPress={() => handleFilterByType('savings')}
         testID={`${testID}-filter-savings`}
       >
-        <ThemedText style={[styles.filterButtonText, { color: primaryColor }]}>
+        <Typography
+          variant="caption"
+          style={[styles.filterButtonText, { color: theme.colors.primary }]}
+        >
           Savings
-        </ThemedText>
+        </Typography>
       </Pressable>
-      
+
       <Pressable
-        style={[styles.filterButton, { borderColor }]}
+        style={[styles.filterButton, { borderColor: theme.colors.border }]}
         onPress={handleClearFilters}
         testID={`${testID}-clear-filters`}
       >
-        <ThemedText style={[styles.clearFilterText, { color: secondaryTextColor }]}>
+        <Typography
+          variant="caption"
+          color="textSecondary"
+          style={styles.clearFilterText}
+        >
           Clear
-        </ThemedText>
+        </Typography>
       </Pressable>
     </View>
   );
@@ -345,18 +417,32 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
     if (!error) return null;
 
     return (
-      <View style={[styles.errorContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
-        <ThemedText style={[styles.errorText, { color: '#D32F2F' }]}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: theme.colors.errorBackground,
+            borderColor: theme.colors.error,
+          },
+        ]}
+      >
+        <Typography
+          variant="body2"
+          style={[styles.errorText, { color: theme.colors.error }]}
+        >
           {error}
-        </ThemedText>
+        </Typography>
         <Pressable
           style={styles.errorDismiss}
           onPress={clearError}
           testID={`${testID}-dismiss-error`}
         >
-          <ThemedText style={[styles.errorDismissText, { color: '#D32F2F' }]}>
+          <Typography
+            variant="body2"
+            style={[styles.errorDismissText, { color: theme.colors.error }]}
+          >
             Dismiss
-          </ThemedText>
+          </Typography>
         </Pressable>
       </View>
     );
@@ -367,18 +453,29 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
   // ============================================================================
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: borderColor }]}>
-        <ThemedText style={styles.headerTitle}>Account Management</ThemedText>
-        
+      <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
+        <Typography variant="h2" style={styles.headerTitle}>
+          Account Management
+        </Typography>
+
         {initialized && accounts.length > 0 && (
           <Pressable
-            style={[styles.addButton, { backgroundColor: primaryColor }]}
-            onPress={() => setScreenState(prev => ({ ...prev, showCreateModal: true }))}
+            style={[
+              styles.addButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={() =>
+              setScreenState((prev) => ({ ...prev, showCreateModal: true }))
+            }
             testID={`${testID}-add-account`}
           >
-            <ThemedText style={styles.addButtonText}>+ Add</ThemedText>
+            <Typography variant="button" style={styles.addButtonText}>
+              + Add
+            </Typography>
           </Pressable>
         )}
       </View>
@@ -400,14 +497,14 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
         style={styles.list}
         contentContainerStyle={[
           styles.listContent,
-          accounts.length === 0 && styles.emptyListContent
+          accounts.length === 0 && styles.emptyListContent,
         ]}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl
             refreshing={screenState.refreshing}
             onRefresh={handleRefresh}
-            tintColor={primaryColor}
+            tintColor={theme.colors.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -446,7 +543,7 @@ export const AccountManagementScreen: React.FC<AccountManagementScreenProps> = (
           />
         )}
       </Modal>
-    </ThemedView>
+    </View>
   );
 };
 
@@ -458,7 +555,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -466,24 +563,24 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
   },
-  
+
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
   },
-  
+
   addButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  
+
   addButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
-  
+
   errorContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -493,128 +590,128 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
   },
-  
+
   errorText: {
     flex: 1,
     fontSize: 14,
   },
-  
+
   errorDismiss: {
     marginLeft: 12,
   },
-  
+
   errorDismissText: {
     fontSize: 14,
     fontWeight: '600',
   },
-  
+
   summaryCard: {
     margin: 16,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
   },
-  
+
   summaryTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 12,
   },
-  
+
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  
+
   summaryLabel: {
     fontSize: 14,
   },
-  
+
   summaryAmount: {
     fontSize: 20,
     fontWeight: '700',
   },
-  
+
   summaryValue: {
     fontSize: 14,
     fontWeight: '500',
   },
-  
+
   filterBar: {
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
     gap: 8,
   },
-  
+
   filterButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
     borderRadius: 6,
   },
-  
+
   filterButtonText: {
     fontSize: 12,
     fontWeight: '500',
   },
-  
+
   clearFilterText: {
     fontSize: 12,
   },
-  
+
   list: {
     flex: 1,
   },
-  
+
   listContent: {
     padding: 16,
   },
-  
+
   emptyListContent: {
     flex: 1,
     justifyContent: 'center',
   },
-  
+
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  
+
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 8,
     textAlign: 'center',
   },
-  
+
   emptyStateMessage: {
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
-  
+
   initializeButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  
+
   initializeButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  
+
   createButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  
+
   createButtonText: {
     color: '#FFFFFF',
     fontSize: 16,

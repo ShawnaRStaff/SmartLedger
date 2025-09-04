@@ -3,28 +3,15 @@
  * Utilities for creating realistic test data for development and testing
  */
 
-import { 
-  doc, 
-  setDoc, 
-  collection, 
-  writeBatch,
-  serverTimestamp 
-} from 'firebase/firestore';
+import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import type {
+  CreateAccountInput,
+  CreateTransactionInput,
+  CreateCategoryInput,
+} from '../types';
 
 // Firebase config import with fallback for tests
-let db: any;
-try {
-  const firebaseConfig = require('@/services/firebase/config');
-  db = firebaseConfig.db;
-} catch {
-  // Fallback for test environment
-  db = {};
-}
-import type { 
-  CreateAccountInput, 
-  CreateTransactionInput, 
-  CreateCategoryInput 
-} from '../types';
+import { db } from '@/services/firebase/config';
 
 // ============================================================================
 // TEST DATA GENERATORS
@@ -37,7 +24,7 @@ export const generateTestAccounts = (userId: string): CreateAccountInput[] => [
   {
     name: 'Primary Checking',
     type: 'checking',
-    startingBalance: 2500.00,
+    startingBalance: 2500.0,
     currency: 'USD',
     description: 'Main checking account for daily expenses',
     institution: 'Chase Bank',
@@ -45,12 +32,12 @@ export const generateTestAccounts = (userId: string): CreateAccountInput[] => [
     color: '#0a7ea4',
     icon: 'account-balance',
     includeInTotals: true,
-    sortOrder: 0
+    sortOrder: 0,
   },
   {
     name: 'Emergency Savings',
     type: 'savings',
-    startingBalance: 10000.00,
+    startingBalance: 10000.0,
     currency: 'USD',
     description: 'Emergency fund savings account',
     institution: 'Chase Bank',
@@ -58,12 +45,12 @@ export const generateTestAccounts = (userId: string): CreateAccountInput[] => [
     color: '#16a34a',
     icon: 'savings',
     includeInTotals: true,
-    sortOrder: 1
+    sortOrder: 1,
   },
   {
     name: 'Travel Fund',
     type: 'savings',
-    startingBalance: 1500.00,
+    startingBalance: 1500.0,
     currency: 'USD',
     description: 'Saving for vacation and travel',
     institution: 'Ally Bank',
@@ -71,23 +58,23 @@ export const generateTestAccounts = (userId: string): CreateAccountInput[] => [
     color: '#dc2626',
     icon: 'flight',
     includeInTotals: true,
-    sortOrder: 2
+    sortOrder: 2,
   },
   {
     name: 'Cash Wallet',
     type: 'cash',
-    startingBalance: 150.00,
+    startingBalance: 150.0,
     currency: 'USD',
     description: 'Physical cash on hand',
     color: '#059669',
     icon: 'account-balance-wallet',
     includeInTotals: true,
-    sortOrder: 3
+    sortOrder: 3,
   },
   {
     name: 'Credit Card',
     type: 'credit',
-    startingBalance: 0.00,
+    startingBalance: 0.0,
     currency: 'USD',
     description: 'Rewards credit card',
     institution: 'Capital One',
@@ -95,8 +82,8 @@ export const generateTestAccounts = (userId: string): CreateAccountInput[] => [
     color: '#7c3aed',
     icon: 'credit-card',
     includeInTotals: false,
-    sortOrder: 4
-  }
+    sortOrder: 4,
+  },
 ];
 
 /**
@@ -109,23 +96,27 @@ export const generateTestTransactions = (
 ): CreateTransactionInput[] => {
   const transactions: CreateTransactionInput[] = [];
   const currentDate = new Date();
-  
+
   // Generate transactions for the last 30 days
   for (let i = 0; i < 30; i++) {
     const date = new Date(currentDate);
     date.setDate(date.getDate() - i);
-    
+
     // Random number of transactions per day (0-3)
     const transactionCount = Math.floor(Math.random() * 4);
-    
+
     for (let j = 0; j < transactionCount; j++) {
-      const transaction = generateRandomTransaction(date, accountId, categoryIds);
+      const transaction = generateRandomTransaction(
+        date,
+        accountId,
+        categoryIds
+      );
       if (transaction) {
         transactions.push(transaction);
       }
     }
   }
-  
+
   return transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
@@ -138,8 +129,9 @@ function generateRandomTransaction(
   categoryIds: { [key: string]: string }
 ): CreateTransactionInput | null {
   const transactionTypes = ['deposit', 'withdrawal'] as const;
-  const type = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
-  
+  const type =
+    transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
+
   if (type === 'deposit') {
     return generateDepositTransaction(date, accountId, categoryIds);
   } else {
@@ -156,16 +148,32 @@ function generateDepositTransaction(
   categoryIds: { [key: string]: string }
 ): CreateTransactionInput {
   const deposits = [
-    { description: 'Salary Deposit', amount: 3200.00, category: 'Salary' },
-    { description: 'Freelance Payment', amount: 750.00, category: 'Freelance Income' },
-    { description: 'Dividend Payment', amount: 125.50, category: 'Investment Income' },
-    { description: 'Tax Refund', amount: 890.00, category: 'Other Income' },
-    { description: 'Side Gig Payment', amount: 200.00, category: 'Freelance Income' },
-    { description: 'Interest Payment', amount: 45.25, category: 'Investment Income' }
+    { description: 'Salary Deposit', amount: 3200.0, category: 'Salary' },
+    {
+      description: 'Freelance Payment',
+      amount: 750.0,
+      category: 'Freelance Income',
+    },
+    {
+      description: 'Dividend Payment',
+      amount: 125.5,
+      category: 'Investment Income',
+    },
+    { description: 'Tax Refund', amount: 890.0, category: 'Other Income' },
+    {
+      description: 'Side Gig Payment',
+      amount: 200.0,
+      category: 'Freelance Income',
+    },
+    {
+      description: 'Interest Payment',
+      amount: 45.25,
+      category: 'Investment Income',
+    },
   ];
-  
+
   const deposit = deposits[Math.floor(Math.random() * deposits.length)];
-  
+
   return {
     accountId,
     type: 'deposit',
@@ -174,7 +182,7 @@ function generateDepositTransaction(
     categoryId: categoryIds[deposit.category] || categoryIds['Other Income'],
     date,
     status: Math.random() > 0.3 ? 'cleared' : 'pending',
-    referenceNumber: `DEP${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    referenceNumber: `DEP${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
   };
 }
 
@@ -188,39 +196,47 @@ function generateWithdrawalTransaction(
 ): CreateTransactionInput {
   const withdrawals = [
     { description: 'Whole Foods', amount: 89.45, category: 'Groceries' },
-    { description: 'Electric Bill', amount: 145.50, category: 'Utilities' },
-    { description: 'Rent Payment', amount: 1200.00, category: 'Rent/Mortgage' },
-    { description: 'Gas Station', amount: 45.00, category: 'Transportation' },
-    { description: 'Netflix Subscription', amount: 15.99, category: 'Entertainment' },
+    { description: 'Electric Bill', amount: 145.5, category: 'Utilities' },
+    { description: 'Rent Payment', amount: 1200.0, category: 'Rent/Mortgage' },
+    { description: 'Gas Station', amount: 45.0, category: 'Transportation' },
+    {
+      description: 'Netflix Subscription',
+      amount: 15.99,
+      category: 'Entertainment',
+    },
     { description: 'Starbucks', amount: 6.75, category: 'Dining Out' },
     { description: 'Amazon Purchase', amount: 34.99, category: 'Shopping' },
-    { description: 'Doctor Visit', amount: 75.00, category: 'Healthcare' },
-    { description: 'Uber Ride', amount: 18.50, category: 'Transportation' },
-    { description: 'Movie Tickets', amount: 24.00, category: 'Entertainment' },
+    { description: 'Doctor Visit', amount: 75.0, category: 'Healthcare' },
+    { description: 'Uber Ride', amount: 18.5, category: 'Transportation' },
+    { description: 'Movie Tickets', amount: 24.0, category: 'Entertainment' },
     { description: 'Grocery Outlet', amount: 67.23, category: 'Groceries' },
-    { description: 'Car Insurance', amount: 125.00, category: 'Insurance' },
+    { description: 'Car Insurance', amount: 125.0, category: 'Insurance' },
     { description: 'Target', amount: 45.67, category: 'Shopping' },
-    { description: 'Restaurant Dinner', amount: 78.90, category: 'Dining Out' }
+    { description: 'Restaurant Dinner', amount: 78.9, category: 'Dining Out' },
   ];
-  
-  const withdrawal = withdrawals[Math.floor(Math.random() * withdrawals.length)];
-  
+
+  const withdrawal =
+    withdrawals[Math.floor(Math.random() * withdrawals.length)];
+
   return {
     accountId,
     type: 'withdrawal',
     amount: withdrawal.amount,
     description: withdrawal.description,
-    categoryId: categoryIds[withdrawal.category] || categoryIds['Other Expenses'],
+    categoryId:
+      categoryIds[withdrawal.category] || categoryIds['Other Expenses'],
     date,
     status: Math.random() > 0.2 ? 'cleared' : 'pending',
-    referenceNumber: `WTH${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    referenceNumber: `WTH${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
   };
 }
 
 /**
  * Generate realistic test categories
  */
-export const generateTestCategories = (userId: string): CreateCategoryInput[] => [
+export const generateTestCategories = (
+  userId: string
+): CreateCategoryInput[] => [
   // Income categories
   {
     name: 'Salary',
@@ -229,7 +245,7 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     icon: 'work',
     description: 'Regular salary and wages',
     keywords: ['salary', 'wage', 'payroll', 'income'],
-    sortOrder: 0
+    sortOrder: 0,
   },
   {
     name: 'Freelance Income',
@@ -238,7 +254,7 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     icon: 'laptop',
     description: 'Freelance and contract work',
     keywords: ['freelance', 'contract', 'consulting', 'gig'],
-    sortOrder: 1
+    sortOrder: 1,
   },
   {
     name: 'Investment Income',
@@ -247,7 +263,7 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     icon: 'trending-up',
     description: 'Dividends, interest, and investment returns',
     keywords: ['dividend', 'interest', 'investment', 'return'],
-    sortOrder: 2
+    sortOrder: 2,
   },
   {
     name: 'Other Income',
@@ -256,9 +272,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     icon: 'attach-money',
     description: 'Miscellaneous income sources',
     keywords: ['bonus', 'gift', 'refund', 'other'],
-    sortOrder: 3
+    sortOrder: 3,
   },
-  
+
   // Expense categories
   {
     name: 'Groceries',
@@ -266,9 +282,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#FF5722',
     icon: 'shopping-cart',
     description: 'Food and household items',
-    budgetAmount: 400.00,
+    budgetAmount: 400.0,
     keywords: ['grocery', 'food', 'supermarket', 'household'],
-    sortOrder: 10
+    sortOrder: 10,
   },
   {
     name: 'Utilities',
@@ -276,9 +292,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#FF9800',
     icon: 'flash-on',
     description: 'Electric, gas, water, internet',
-    budgetAmount: 200.00,
+    budgetAmount: 200.0,
     keywords: ['electric', 'gas', 'water', 'internet', 'utility'],
-    sortOrder: 11
+    sortOrder: 11,
   },
   {
     name: 'Rent/Mortgage',
@@ -286,9 +302,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#F44336',
     icon: 'home',
     description: 'Housing payments',
-    budgetAmount: 1200.00,
+    budgetAmount: 1200.0,
     keywords: ['rent', 'mortgage', 'housing', 'apartment'],
-    sortOrder: 12
+    sortOrder: 12,
   },
   {
     name: 'Transportation',
@@ -296,9 +312,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#9C27B0',
     icon: 'directions-car',
     description: 'Gas, parking, public transit',
-    budgetAmount: 300.00,
+    budgetAmount: 300.0,
     keywords: ['gas', 'parking', 'transit', 'uber', 'car'],
-    sortOrder: 13
+    sortOrder: 13,
   },
   {
     name: 'Healthcare',
@@ -306,9 +322,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#E91E63',
     icon: 'local-hospital',
     description: 'Medical expenses and insurance',
-    budgetAmount: 150.00,
+    budgetAmount: 150.0,
     keywords: ['medical', 'doctor', 'pharmacy', 'health'],
-    sortOrder: 14
+    sortOrder: 14,
   },
   {
     name: 'Entertainment',
@@ -316,9 +332,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#673AB7',
     icon: 'movie',
     description: 'Movies, streaming, hobbies',
-    budgetAmount: 100.00,
+    budgetAmount: 100.0,
     keywords: ['movie', 'streaming', 'hobby', 'fun', 'entertainment'],
-    sortOrder: 15
+    sortOrder: 15,
   },
   {
     name: 'Dining Out',
@@ -326,9 +342,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#3F51B5',
     icon: 'restaurant',
     description: 'Restaurants and takeout',
-    budgetAmount: 250.00,
+    budgetAmount: 250.0,
     keywords: ['restaurant', 'takeout', 'dining', 'food'],
-    sortOrder: 16
+    sortOrder: 16,
   },
   {
     name: 'Shopping',
@@ -336,9 +352,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#2196F3',
     icon: 'shopping-bag',
     description: 'Clothing, electronics, misc purchases',
-    budgetAmount: 200.00,
+    budgetAmount: 200.0,
     keywords: ['shopping', 'clothing', 'electronics', 'amazon'],
-    sortOrder: 17
+    sortOrder: 17,
   },
   {
     name: 'Insurance',
@@ -346,9 +362,9 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#03DAC6',
     icon: 'security',
     description: 'Auto, health, life insurance',
-    budgetAmount: 300.00,
+    budgetAmount: 300.0,
     keywords: ['insurance', 'auto', 'health', 'life'],
-    sortOrder: 18
+    sortOrder: 18,
   },
   {
     name: 'Other Expenses',
@@ -356,11 +372,11 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     color: '#607D8B',
     icon: 'receipt',
     description: 'Miscellaneous expenses',
-    budgetAmount: 100.00,
+    budgetAmount: 100.0,
     keywords: ['misc', 'other', 'miscellaneous'],
-    sortOrder: 19
+    sortOrder: 19,
   },
-  
+
   // Transfer category
   {
     name: 'Account Transfer',
@@ -369,8 +385,8 @@ export const generateTestCategories = (userId: string): CreateCategoryInput[] =>
     icon: 'swap-horiz',
     description: 'Transfers between accounts',
     keywords: ['transfer', 'move', 'between'],
-    sortOrder: 20
-  }
+    sortOrder: 20,
+  },
 ];
 
 // ============================================================================
@@ -399,7 +415,7 @@ export async function createTestDataForUser(
     includeAccounts = true,
     includeCategories = true,
     includeTransactions = true,
-    transactionCount = 50
+    transactionCount = 50,
   } = options;
 
   const result = {
@@ -407,7 +423,7 @@ export async function createTestDataForUser(
     accountsCreated: 0,
     categoriesCreated: 0,
     transactionsCreated: 0,
-    errors: [] as string[]
+    errors: [] as string[],
   };
 
   try {
@@ -417,7 +433,7 @@ export async function createTestDataForUser(
     // Create categories first
     if (includeCategories) {
       const categories = generateTestCategories(userId);
-      
+
       for (const categoryData of categories) {
         const categoryDoc = {
           ...categoryData,
@@ -426,7 +442,7 @@ export async function createTestDataForUser(
           isSystem: false,
           status: 'active' as const,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         const categoryRef = doc(collection(db, 'categories'));
@@ -439,7 +455,7 @@ export async function createTestDataForUser(
     // Create accounts
     if (includeAccounts) {
       const accounts = generateTestAccounts(userId);
-      
+
       for (const accountData of accounts) {
         const accountDoc = {
           ...accountData,
@@ -447,12 +463,12 @@ export async function createTestDataForUser(
           status: 'active' as const,
           userId,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         const accountRef = doc(collection(db, 'accounts'));
         await setDoc(accountRef, accountDoc);
-        
+
         if (result.accountsCreated === 0) {
           primaryAccountId = accountRef.id;
         }
@@ -461,12 +477,20 @@ export async function createTestDataForUser(
     }
 
     // Create transactions
-    if (includeTransactions && primaryAccountId && Object.keys(categoryIds).length > 0) {
-      const transactions = generateTestTransactions(userId, primaryAccountId, categoryIds);
+    if (
+      includeTransactions &&
+      primaryAccountId &&
+      Object.keys(categoryIds).length > 0
+    ) {
+      const transactions = generateTestTransactions(
+        userId,
+        primaryAccountId,
+        categoryIds
+      );
       const limitedTransactions = transactions.slice(0, transactionCount);
-      
-      let runningBalance = 2500.00; // Starting balance from primary account
-      
+
+      let runningBalance = 2500.0; // Starting balance from primary account
+
       for (const transactionData of limitedTransactions) {
         // Calculate running balance
         if (transactionData.type === 'deposit') {
@@ -480,7 +504,7 @@ export async function createTestDataForUser(
           balance: runningBalance,
           userId,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         const transactionRef = doc(collection(db, 'transactions'));
@@ -490,10 +514,11 @@ export async function createTestDataForUser(
     }
 
     result.success = true;
-
   } catch (error) {
     result.success = false;
-    result.errors.push(`Test data creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors.push(
+      `Test data creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
@@ -514,21 +539,26 @@ export async function clearTestDataForUser(userId: string): Promise<{
     accountsDeleted: 0,
     categoriesDeleted: 0,
     transactionsDeleted: 0,
-    errors: [] as string[]
+    errors: [] as string[],
   };
 
   try {
     // Note: In a real app, you'd want to use Firebase Admin SDK for bulk deletes
     // This is a simplified version for development/testing
-    
-    console.warn('clearTestDataForUser: This function should use Firebase Admin SDK for production');
-    
-    result.success = true;
-    result.errors.push('Clear function not implemented - use Firebase console for manual cleanup');
 
+    console.warn(
+      'clearTestDataForUser: This function should use Firebase Admin SDK for production'
+    );
+
+    result.success = true;
+    result.errors.push(
+      'Clear function not implemented - use Firebase console for manual cleanup'
+    );
   } catch (error) {
     result.success = false;
-    result.errors.push(`Test data cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors.push(
+      `Test data cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
@@ -545,7 +575,7 @@ export const SAMPLE_ACCOUNT = {
   id: 'sample-account-1',
   name: 'Sample Checking',
   type: 'checking' as const,
-  startingBalance: 1000.00,
+  startingBalance: 1000.0,
   currentBalance: 1234.56,
   currency: 'USD',
   status: 'active' as const,
@@ -555,7 +585,7 @@ export const SAMPLE_ACCOUNT = {
   color: '#0a7ea4',
   icon: 'account-balance',
   includeInTotals: true,
-  sortOrder: 0
+  sortOrder: 0,
 };
 
 export const SAMPLE_TRANSACTIONS = [
@@ -563,15 +593,15 @@ export const SAMPLE_TRANSACTIONS = [
     id: 'sample-txn-1',
     accountId: 'sample-account-1',
     type: 'deposit' as const,
-    amount: 2500.00,
-    balance: 3500.00,
+    amount: 2500.0,
+    balance: 3500.0,
     description: 'Salary Deposit',
     categoryId: 'sample-category-income',
     date: new Date('2024-01-15'),
     status: 'cleared' as const,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
-    userId: 'sample-user'
+    userId: 'sample-user',
   },
   {
     id: 'sample-txn-2',
@@ -585,17 +615,19 @@ export const SAMPLE_TRANSACTIONS = [
     status: 'cleared' as const,
     createdAt: new Date('2024-01-14'),
     updatedAt: new Date('2024-01-14'),
-    userId: 'sample-user'
-  }
+    userId: 'sample-user',
+  },
 ];
 
-export const SAMPLE_CATEGORIES = generateTestCategories('sample-user').map((cat, index) => ({
-  id: `sample-category-${index}`,
-  ...cat,
-  userId: 'sample-user',
-  isDefault: true,
-  isSystem: false,
-  status: 'active' as const,
-  createdAt: new Date(),
-  updatedAt: new Date()
-}));
+export const SAMPLE_CATEGORIES = generateTestCategories('sample-user').map(
+  (cat, index) => ({
+    id: `sample-category-${index}`,
+    ...cat,
+    userId: 'sample-user',
+    isDefault: true,
+    isSystem: false,
+    status: 'active' as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+);

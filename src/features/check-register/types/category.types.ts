@@ -16,47 +16,47 @@ export type CategoryStatus = 'active' | 'inactive' | 'archived';
 export interface Category {
   /** Unique category identifier */
   id: string;
-  
+
   /** Category name */
   name: string;
-  
+
   /** Category type (income, expense, transfer) */
   type: CategoryType;
-  
+
   /** Category description */
   description?: string;
-  
+
   /** Category color for visual identification */
   color: string;
-  
+
   /** Category icon identifier */
   icon: string;
-  
+
   /** Whether this is a system default category */
   isDefault: boolean;
-  
+
   /** Whether this is a built-in system category */
   isSystem: boolean;
-  
+
   /** Parent category for hierarchical structure */
   parentCategoryId?: string;
-  
+
   /** Category status */
   status: CategoryStatus;
-  
+
   /** Display order for sorting */
   sortOrder: number;
-  
+
   /** Budget amount (for expense categories) */
   budgetAmount?: number;
-  
+
   /** Keywords for auto-categorization */
   keywords?: string[];
-  
+
   /** Metadata timestamps */
   createdAt: Date;
   updatedAt: Date;
-  
+
   /** User who owns this category (null for system categories) */
   userId: string | null;
 }
@@ -102,25 +102,25 @@ export interface UpdateCategoryInput {
 export interface CategoryWithStats extends Category {
   /** Number of transactions using this category */
   transactionCount: number;
-  
+
   /** Total amount spent in this category */
   totalAmount: number;
-  
+
   /** Formatted total amount */
   formattedTotalAmount: string;
-  
+
   /** Average transaction amount */
   averageAmount: number;
-  
+
   /** Formatted average amount */
   formattedAverageAmount: string;
-  
+
   /** Date of last usage */
   lastUsedDate?: Date;
-  
+
   /** Formatted last used date */
   formattedLastUsedDate?: string;
-  
+
   /** Monthly spending trend */
   monthlyTrend: {
     currentMonth: number;
@@ -128,7 +128,7 @@ export interface CategoryWithStats extends Category {
     percentChange: number;
     direction: 'up' | 'down' | 'neutral';
   };
-  
+
   /** Budget progress (for expense categories) */
   budgetProgress?: {
     spent: number;
@@ -150,21 +150,21 @@ export interface CategoryWithStats extends Category {
 export interface CategoryTreeNode extends CategoryWithStats {
   /** Child categories */
   children: CategoryTreeNode[];
-  
+
   /** Depth level in tree */
   level: number;
-  
+
   /** Whether node is expanded */
   isExpanded: boolean;
-  
+
   /** Whether node has children */
   hasChildren: boolean;
-  
+
   /** Full path from root (for breadcrumbs) */
-  path: Array<{
+  path: {
     id: string;
     name: string;
-  }>;
+  }[];
 }
 
 // ============================================================================
@@ -219,7 +219,12 @@ export interface CategoryValidationResult {
 // QUERY TYPES
 // ============================================================================
 
-export type CategorySortField = 'name' | 'type' | 'usage' | 'amount' | 'created';
+export type CategorySortField =
+  | 'name'
+  | 'type'
+  | 'usage'
+  | 'amount'
+  | 'created';
 
 /**
  * Category query filters
@@ -227,22 +232,22 @@ export type CategorySortField = 'name' | 'type' | 'usage' | 'amount' | 'created'
 export interface CategoryFilters {
   /** Filter by category type */
   types?: CategoryType[];
-  
+
   /** Filter by status */
   statuses?: CategoryStatus[];
-  
+
   /** Search category names */
   searchText?: string;
-  
+
   /** Filter by parent category */
   parentCategoryId?: string;
-  
+
   /** Only include user-created categories */
   userCategoriesOnly?: boolean;
-  
+
   /** Only include categories with transactions */
   usedCategoriesOnly?: boolean;
-  
+
   /** Filter by usage frequency */
   usageRange?: {
     minUsage: number;
@@ -256,19 +261,19 @@ export interface CategoryFilters {
 export interface CategoryQueryOptions {
   /** Include inactive categories */
   includeInactive?: boolean;
-  
+
   /** Include usage statistics */
   includeStats?: boolean;
-  
+
   /** Build hierarchical tree structure */
   buildTree?: boolean;
-  
+
   /** Sort configuration */
   sort?: {
     field: CategorySortField;
     direction: 'asc' | 'desc';
   };
-  
+
   /** Maximum tree depth to return */
   maxDepth?: number;
 }
@@ -280,7 +285,12 @@ export interface CategoryQueryOptions {
 /**
  * Bulk category operation types
  */
-export type BulkCategoryOperation = 'activate' | 'deactivate' | 'archive' | 'delete' | 'merge';
+export type BulkCategoryOperation =
+  | 'activate'
+  | 'deactivate'
+  | 'archive'
+  | 'delete'
+  | 'merge';
 
 /**
  * Bulk category operation input
@@ -288,13 +298,13 @@ export type BulkCategoryOperation = 'activate' | 'deactivate' | 'archive' | 'del
 export interface BulkCategoryInput {
   /** Category IDs to operate on */
   categoryIds: string[];
-  
+
   /** Operation type */
   operation: BulkCategoryOperation;
-  
+
   /** Target category ID (for merge operations) */
   targetCategoryId?: string;
-  
+
   /** Update data (for update operations) */
   updateData?: Partial<UpdateCategoryInput>;
 }
@@ -305,16 +315,16 @@ export interface BulkCategoryInput {
 export interface BulkCategoryResult {
   /** Number of categories successfully processed */
   successCount: number;
-  
+
   /** Number of categories that failed */
   errorCount: number;
-  
+
   /** Error details for failed operations */
-  errors: Array<{
+  errors: {
     categoryId: string;
     error: string;
-  }>;
-  
+  }[];
+
   /** Number of transactions affected */
   affectedTransactions: number;
 }

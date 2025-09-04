@@ -3,7 +3,7 @@
  * Complete financial command center with all register functionality
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -12,7 +12,7 @@ import {
   TextInput,
   Alert,
   RefreshControl,
-  FlatList
+  FlatList,
 } from 'react-native';
 import { Typography, Button, createThemedStyles } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
@@ -26,29 +26,34 @@ import type { Account, Transaction } from '../../types';
 export default function AccountsMainScreen() {
   const { user } = useAuth();
   const styles = useStyles();
-  
+
   // State Management
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'categories'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'transactions' | 'categories'
+  >('overview');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showTransferModal, setShowTransferModal] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Mock transactions for now (will be replaced with real data)
   const [transactions] = useState<Transaction[]>([
     {
       id: '1',
       accountId: 'acc1',
       type: 'deposit',
-      amount: 2500.00,
+      amount: 2500.0,
       description: 'Salary',
-      category: 'Income',
+      categoryId: 'Income',
       date: new Date('2024-01-15'),
-      balance: 2500.00,
+      balance: 2500.0,
+      status: 'cleared',
       createdAt: new Date(),
       updatedAt: new Date(),
-      userId: user?.uid || ''
+      userId: user?.uid || '',
     },
     {
       id: '2',
@@ -56,53 +61,51 @@ export default function AccountsMainScreen() {
       type: 'withdrawal',
       amount: 89.99,
       description: 'Grocery Store',
-      category: 'Food',
+      categoryId: 'Food',
       date: new Date('2024-01-14'),
       balance: 2410.01,
+      status: 'cleared',
       createdAt: new Date(),
       updatedAt: new Date(),
-      userId: user?.uid || ''
-    }
+      userId: user?.uid || '',
+    },
   ]);
 
-  const {
-    accounts,
-    summary,
-    loading,
-    refreshAccounts
-  } = useAccounts({
+  const { accounts, summary, refreshAccounts } = useAccounts({
     userId: user?.uid || '',
-    autoRefresh: true
+    autoRefresh: true,
   });
 
   // ============================================================================
   // QUICK ACTION BAR
   // ============================================================================
-  
+
   const renderQuickActions = () => (
     <View style={styles.quickActionsBar}>
-      <Pressable 
+      <Pressable
         style={[styles.quickActionButton, styles.primaryAction]}
         onPress={() => setShowAddTransaction(true)}
       >
-        <Typography variant="h3" style={{ color: 'white' }}>+ Add</Typography>
+        <Typography variant="h3" style={{ color: 'white' }}>
+          + Add
+        </Typography>
       </Pressable>
-      
-      <Pressable 
+
+      <Pressable
         style={styles.quickActionButton}
         onPress={() => setShowTransferModal(true)}
       >
         <Typography variant="body1">⇄ Transfer</Typography>
       </Pressable>
-      
-      <Pressable 
+
+      <Pressable
         style={styles.quickActionButton}
         onPress={() => Alert.alert('Export', 'Export feature coming soon!')}
       >
         <Typography variant="body1">📤 Export</Typography>
       </Pressable>
-      
-      <Pressable 
+
+      <Pressable
         style={styles.quickActionButton}
         onPress={() => setActiveTab('categories')}
       >
@@ -114,39 +117,39 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // TAB NAVIGATION
   // ============================================================================
-  
+
   const renderTabBar = () => (
     <View style={styles.tabBar}>
       <Pressable
         style={[styles.tab, activeTab === 'overview' && styles.activeTab]}
         onPress={() => setActiveTab('overview')}
       >
-        <Typography 
-          variant="body1" 
+        <Typography
+          variant="body1"
           color={activeTab === 'overview' ? 'primary' : 'textSecondary'}
         >
           Overview
         </Typography>
       </Pressable>
-      
+
       <Pressable
         style={[styles.tab, activeTab === 'transactions' && styles.activeTab]}
         onPress={() => setActiveTab('transactions')}
       >
-        <Typography 
-          variant="body1" 
+        <Typography
+          variant="body1"
           color={activeTab === 'transactions' ? 'primary' : 'textSecondary'}
         >
           Transactions
         </Typography>
       </Pressable>
-      
+
       <Pressable
         style={[styles.tab, activeTab === 'categories' && styles.activeTab]}
         onPress={() => setActiveTab('categories')}
       >
-        <Typography 
-          variant="body1" 
+        <Typography
+          variant="body1"
           color={activeTab === 'categories' ? 'primary' : 'textSecondary'}
         >
           Categories
@@ -158,9 +161,9 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // OVERVIEW TAB - Account Cards
   // ============================================================================
-  
+
   const renderOverviewTab = () => (
-    <ScrollView 
+    <ScrollView
       style={styles.tabContent}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -168,11 +171,14 @@ export default function AccountsMainScreen() {
     >
       {/* Total Balance Card */}
       <View style={styles.totalBalanceCard}>
-        <Typography variant="body1" color="textSecondary">Total Balance</Typography>
+        <Typography variant="body1" color="textSecondary">
+          Total Balance
+        </Typography>
         <Typography variant="h1" color="primary">
-          ${summary?.totalBalance.toLocaleString('en-US', {
+          $
+          {summary?.totalBalance.toLocaleString('en-US', {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 2,
           }) || '0.00'}
         </Typography>
         <Typography variant="body2" color="success">
@@ -181,10 +187,12 @@ export default function AccountsMainScreen() {
       </View>
 
       {/* Account Cards */}
-      <Typography variant="h3" style={styles.sectionTitle}>Your Accounts</Typography>
-      {accounts.map(account => (
-        <Pressable 
-          key={account.id} 
+      <Typography variant="h3" style={styles.sectionTitle}>
+        Your Accounts
+      </Typography>
+      {accounts.map((account) => (
+        <Pressable
+          key={account.id}
           style={styles.accountCard}
           onPress={() => handleAccountSelect(account)}
         >
@@ -192,16 +200,21 @@ export default function AccountsMainScreen() {
             <View>
               <Typography variant="h3">{account.name}</Typography>
               <Typography variant="body2" color="textSecondary">
-                {account.type.charAt(0).toUpperCase() + account.type.slice(1)} • {account.transactionCount || 0} transactions
+                {account.type.charAt(0).toUpperCase() + account.type.slice(1)} •{' '}
+                {account.transactionCount || 0} transactions
               </Typography>
             </View>
-            <Typography variant="h2" color={account.currentBalance >= 0 ? 'text' : 'error'}>
-              ${account.currentBalance.toLocaleString('en-US', {
-                minimumFractionDigits: 2
+            <Typography
+              variant="h2"
+              color={account.currentBalance >= 0 ? 'text' : 'error'}
+            >
+              $
+              {account.currentBalance.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
               })}
             </Typography>
           </View>
-          
+
           {/* Recent Activity Preview */}
           <View style={styles.recentActivity}>
             <Typography variant="body2" color="textSecondary">
@@ -212,9 +225,11 @@ export default function AccountsMainScreen() {
       ))}
 
       {/* Add Account Button */}
-      <Button 
-        variant="outline" 
-        onPress={() => Alert.alert('Add Account', 'Account creation form coming soon!')}
+      <Button
+        variant="outline"
+        onPress={() =>
+          Alert.alert('Add Account', 'Account creation form coming soon!')
+        }
         style={styles.addAccountButton}
       >
         + Add New Account
@@ -225,7 +240,7 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // TRANSACTIONS TAB - Transaction History
   // ============================================================================
-  
+
   const renderTransactionsTab = () => (
     <View style={styles.tabContent}>
       {/* Search Bar */}
@@ -240,7 +255,11 @@ export default function AccountsMainScreen() {
       </View>
 
       {/* Filter Options */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterBar}
+      >
         <Pressable style={styles.filterChip}>
           <Typography variant="body2">All Accounts</Typography>
         </Pressable>
@@ -255,18 +274,18 @@ export default function AccountsMainScreen() {
       {/* Transaction List */}
       <FlatList
         data={transactions}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable style={styles.transactionRow}>
             <View style={styles.transactionLeft}>
               <Typography variant="body1">{item.description}</Typography>
               <Typography variant="body2" color="textSecondary">
-                {item.category} • {item.date.toLocaleDateString()}
+                {item.categoryId} • {item.date.toLocaleDateString()}
               </Typography>
             </View>
             <View style={styles.transactionRight}>
-              <Typography 
-                variant="h3" 
+              <Typography
+                variant="h3"
                 color={item.type === 'deposit' ? 'success' : 'text'}
               >
                 {item.type === 'deposit' ? '+' : '-'}${item.amount.toFixed(2)}
@@ -294,34 +313,50 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // CATEGORIES TAB
   // ============================================================================
-  
+
   const renderCategoriesTab = () => (
     <ScrollView style={styles.tabContent}>
-      <Typography variant="h3" style={styles.sectionTitle}>Income Categories</Typography>
-      {['Salary', 'Freelance', 'Investments', 'Other Income'].map(cat => (
+      <Typography variant="h3" style={styles.sectionTitle}>
+        Income Categories
+      </Typography>
+      {['Salary', 'Freelance', 'Investments', 'Other Income'].map((cat) => (
         <Pressable key={cat} style={styles.categoryRow}>
           <View style={styles.categoryInfo}>
-            <View style={[styles.categoryColor, { backgroundColor: '#4CAF50' }]} />
+            <View
+              style={[styles.categoryColor, { backgroundColor: '#4CAF50' }]}
+            />
             <Typography variant="body1">{cat}</Typography>
           </View>
-          <Typography variant="body2" color="textSecondary">12 transactions</Typography>
+          <Typography variant="body2" color="textSecondary">
+            12 transactions
+          </Typography>
         </Pressable>
       ))}
 
-      <Typography variant="h3" style={styles.sectionTitle}>Expense Categories</Typography>
-      {['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping'].map(cat => (
-        <Pressable key={cat} style={styles.categoryRow}>
-          <View style={styles.categoryInfo}>
-            <View style={[styles.categoryColor, { backgroundColor: '#FF5722' }]} />
-            <Typography variant="body1">{cat}</Typography>
-          </View>
-          <Typography variant="body2" color="textSecondary">8 transactions</Typography>
-        </Pressable>
-      ))}
+      <Typography variant="h3" style={styles.sectionTitle}>
+        Expense Categories
+      </Typography>
+      {['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping'].map(
+        (cat) => (
+          <Pressable key={cat} style={styles.categoryRow}>
+            <View style={styles.categoryInfo}>
+              <View
+                style={[styles.categoryColor, { backgroundColor: '#FF5722' }]}
+              />
+              <Typography variant="body1">{cat}</Typography>
+            </View>
+            <Typography variant="body2" color="textSecondary">
+              8 transactions
+            </Typography>
+          </Pressable>
+        )
+      )}
 
-      <Button 
-        variant="outline" 
-        onPress={() => Alert.alert('Add Category', 'Category creation coming soon!')}
+      <Button
+        variant="outline"
+        onPress={() =>
+          Alert.alert('Add Category', 'Category creation coming soon!')
+        }
         style={styles.addCategoryButton}
       >
         + Add Custom Category
@@ -332,7 +367,7 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // ADD TRANSACTION MODAL
   // ============================================================================
-  
+
   const renderAddTransactionModal = () => (
     <Modal
       visible={showAddTransaction}
@@ -369,19 +404,19 @@ export default function AccountsMainScreen() {
             keyboardType="decimal-pad"
             placeholderTextColor="#999"
           />
-          
+
           <TextInput
             style={styles.modalInput}
             placeholder="Description"
             placeholderTextColor="#999"
           />
-          
+
           <Pressable style={styles.modalInput}>
             <Typography variant="body1" color="textSecondary">
               Select Category →
             </Typography>
           </Pressable>
-          
+
           <Pressable style={styles.modalInput}>
             <Typography variant="body1" color="textSecondary">
               Select Account →
@@ -390,13 +425,13 @@ export default function AccountsMainScreen() {
 
           {/* Action Buttons */}
           <View style={styles.modalActions}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onPress={() => setShowAddTransaction(false)}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onPress={() => {
                 Alert.alert('Success', 'Transaction added!');
                 setShowAddTransaction(false);
@@ -413,7 +448,7 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
-  
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshAccounts();
@@ -428,7 +463,7 @@ export default function AccountsMainScreen() {
   // ============================================================================
   // MAIN RENDER
   // ============================================================================
-  
+
   return (
     <View style={styles.container}>
       {/* Header */}

@@ -1,14 +1,18 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import * as designSystem from '../index';
+import { useTheme } from '../theme';
+import '../colors';
+import '../components/Button';
+import '../components/TextInput';
+import '../components/Typography';
 
 // Simple component tests without complex mocking
 describe('Design System Basic Tests', () => {
   it('should render text components', () => {
-    const { getByText } = render(
-      <Text>Hello World</Text>
-    );
-    
+    const { getByText } = render(<Text>Hello World</Text>);
+
     expect(getByText('Hello World')).toBeTruthy();
   });
 
@@ -23,24 +27,17 @@ describe('Design System Basic Tests', () => {
 
   it('should validate design system exports', () => {
     // Test that our design system has expected structure
-    const designSystem = require('../index');
     expect(designSystem).toBeDefined();
     expect(typeof designSystem).toBe('object');
   });
 
   it('should validate theme functionality', () => {
     // Test basic theme imports
-    const { useTheme } = require('../theme');
     expect(typeof useTheme).toBe('function');
   });
 
   it('should validate color constants', () => {
-    // Test color system exists
-    expect(() => require('../colors')).not.toThrow();
-    
-    // Test that design system components are importable
-    expect(() => require('../components/Button')).not.toThrow();
-    expect(() => require('../components/TextInput')).not.toThrow();
-    expect(() => require('../components/Typography')).not.toThrow();
+    // Test color system exists and components are importable
+    expect(true).toBe(true); // All imports above will throw if they fail
   });
 });

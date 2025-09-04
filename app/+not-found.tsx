@@ -14,12 +14,10 @@ export default function NotFoundScreen() {
           This screen does not exist.
         </Typography>
         <Typography className="text-center text-gray-600 dark:text-gray-400 mb-8">
-          The page you're looking for could not be found.
+          The page you&apos;re looking for could not be found.
         </Typography>
         <Link href="/" asChild>
-          <Button variant="primary">
-            Go to home screen
-          </Button>
+          <Button variant="primary">Go to home screen</Button>
         </Link>
       </View>
     </>

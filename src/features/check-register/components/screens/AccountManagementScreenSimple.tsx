@@ -4,12 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  Alert,
-  RefreshControl
-} from 'react-native';
+import { View, FlatList, Alert, RefreshControl } from 'react-native';
 import { Typography, Button, createThemedStyles } from '@/design-system';
 import { useAccounts } from '../../hooks/useAccounts';
 import type { Account } from '../../types';
@@ -28,13 +23,13 @@ export interface AccountManagementScreenProps {
 // SIMPLE ACCOUNT CARD COMPONENT
 // ============================================================================
 
-const SimpleAccountCard: React.FC<{ 
-  account: Account; 
+const SimpleAccountCard: React.FC<{
+  account: Account;
   onPress: () => void;
   onDelete: () => void;
 }> = ({ account, onPress, onDelete }) => {
   const styles = useCardStyles();
-  
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -43,27 +38,31 @@ const SimpleAccountCard: React.FC<{
           {account.type.toUpperCase()}
         </Typography>
       </View>
-      
+
       <View style={styles.balance}>
-        <Typography variant="h2" color={account.currentBalance >= 0 ? 'success' : 'error'}>
-          ${account.currentBalance.toLocaleString('en-US', { 
+        <Typography
+          variant="h2"
+          color={account.currentBalance >= 0 ? 'success' : 'error'}
+        >
+          $
+          {account.currentBalance.toLocaleString('en-US', {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2 
+            maximumFractionDigits: 2,
           })}
         </Typography>
       </View>
-      
+
       {account.description && (
         <Typography variant="body2" color="textSecondary">
           {account.description}
         </Typography>
       )}
-      
+
       <View style={styles.actions}>
-        <Button variant="outline" onPress={onPress} size="small">
+        <Button variant="outline" onPress={onPress} size="sm">
           View Details
         </Button>
-        <Button variant="outline" onPress={onDelete} size="small">
+        <Button variant="outline" onPress={onDelete} size="sm">
           Delete
         </Button>
       </View>
@@ -97,63 +96,69 @@ const useCardStyles = createThemedStyles((theme) => ({
 // MAIN COMPONENT
 // ============================================================================
 
-export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProps> = ({
-  userId,
-  onAccountSelect,
-  testID = 'account-management-screen'
-}) => {
+export const AccountManagementScreenSimple: React.FC<
+  AccountManagementScreenProps
+> = ({ userId, onAccountSelect, testID = 'account-management-screen' }) => {
   const styles = useStyles();
   const [refreshing, setRefreshing] = useState(false);
 
   const {
     accounts,
     summary,
-    loading,
     error,
     initialized,
     deleteAccount,
     refreshAccounts,
     initializeUser,
-    clearError
+    clearError,
   } = useAccounts({
     userId,
     autoRefresh: true,
     onError: (error) => {
       Alert.alert('Error', error);
-    }
+    },
   });
 
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
 
-  const handleDeleteAccount = useCallback((account: Account) => {
-    Alert.alert(
-      'Delete Account',
-      `Are you sure you want to delete "${account.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const success = await deleteAccount(account.id);
-            if (success) {
-              Alert.alert('Success', 'Account deleted successfully!');
-            }
-          }
-        }
-      ]
-    );
-  }, [deleteAccount]);
+  const handleDeleteAccount = useCallback(
+    (account: Account) => {
+      Alert.alert(
+        'Delete Account',
+        `Are you sure you want to delete "${account.name}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              const success = await deleteAccount(account.id);
+              if (success) {
+                Alert.alert('Success', 'Account deleted successfully!');
+              }
+            },
+          },
+        ]
+      );
+    },
+    [deleteAccount]
+  );
 
-  const handleAccountPress = useCallback((account: Account) => {
-    if (onAccountSelect) {
-      onAccountSelect(account);
-    } else {
-      Alert.alert('Account Details', `Selected: ${account.name}\nBalance: $${account.currentBalance}`);
-    }
-  }, [onAccountSelect]);
+  const handleAccountPress = useCallback(
+    (account: Account) => {
+      if (onAccountSelect) {
+        onAccountSelect(account);
+      } else {
+        Alert.alert(
+          'Account Details',
+          `Selected: ${account.name}\nBalance: $${account.currentBalance}`
+        );
+      }
+    },
+    [onAccountSelect]
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -174,8 +179,8 @@ export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProp
             if (success) {
               Alert.alert('Success', 'Account initialized successfully!');
             }
-          }
-        }
+          },
+        },
       ]
     );
   }, [initializeUser]);
@@ -198,17 +203,18 @@ export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProp
         No Accounts Found
       </Typography>
       <Typography variant="body1" color="textSecondary" align="center">
-        {!initialized 
+        {!initialized
           ? 'Get started by initializing your account with default settings.'
-          : 'Create your first account to start tracking your finances.'
-        }
+          : 'Create your first account to start tracking your finances.'}
       </Typography>
       {!initialized ? (
-        <Button onPress={handleInitializeUser}>
-          Initialize Account
-        </Button>
+        <Button onPress={handleInitializeUser}>Initialize Account</Button>
       ) : (
-        <Button onPress={() => Alert.alert('Info', 'Account creation form coming soon!')}>
+        <Button
+          onPress={() =>
+            Alert.alert('Info', 'Account creation form coming soon!')
+          }
+        >
           Create Account
         </Button>
       )}
@@ -221,17 +227,18 @@ export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProp
     return (
       <View style={styles.summaryCard}>
         <Typography variant="h3">Account Summary</Typography>
-        
+
         <View style={styles.summaryRow}>
           <Typography variant="body1">Total Balance</Typography>
           <Typography variant="h2" color="primary">
-            ${summary.totalBalance.toLocaleString('en-US', { 
+            $
+            {summary.totalBalance.toLocaleString('en-US', {
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2 
+              maximumFractionDigits: 2,
             })}
           </Typography>
         </View>
-        
+
         <View style={styles.summaryRow}>
           <Typography variant="body2" color="textSecondary">
             Active Accounts: {summary.activeAccounts} of {summary.totalAccounts}
@@ -249,7 +256,7 @@ export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProp
         <Typography variant="body2" color="error">
           {error}
         </Typography>
-        <Button variant="text" onPress={clearError} size="small">
+        <Button variant="ghost" onPress={clearError} size="sm">
           Dismiss
         </Button>
       </View>
@@ -281,14 +288,11 @@ export const AccountManagementScreenSimple: React.FC<AccountManagementScreenProp
         style={styles.list}
         contentContainerStyle={[
           styles.listContent,
-          accounts.length === 0 && styles.emptyListContent
+          accounts.length === 0 && styles.emptyListContent,
         ]}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         showsVerticalScrollIndicator={false}
         testID={`${testID}-list`}
@@ -306,11 +310,11 @@ const useStyles = createThemedStyles((theme) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  
+
   header: {
     padding: theme.spacing.lg,
   },
-  
+
   errorContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -322,7 +326,7 @@ const useStyles = createThemedStyles((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.error,
   },
-  
+
   summaryCard: {
     margin: theme.spacing.md,
     padding: theme.spacing.lg,
@@ -331,27 +335,27 @@ const useStyles = createThemedStyles((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  
+
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: theme.spacing.sm,
   },
-  
+
   list: {
     flex: 1,
   },
-  
+
   listContent: {
     padding: theme.spacing.md,
   },
-  
+
   emptyListContent: {
     flex: 1,
     justifyContent: 'center',
   },
-  
+
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,

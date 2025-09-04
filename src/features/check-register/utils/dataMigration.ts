@@ -3,28 +3,23 @@
  * Handles data structure migrations and initial user setup
  */
 
-import { 
-  doc, 
-  setDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
+import {
+  doc,
+  collection,
+  query,
+  where,
+  getDocs,
   writeBatch,
-  serverTimestamp 
+  serverTimestamp,
 } from 'firebase/firestore';
+import {
+  validateSchema,
+  CreateCategorySchema,
+  CreateAccountSchema,
+} from './validation';
 
 // Firebase config import with fallback for tests
-let db: any;
-try {
-  const firebaseConfig = require('@/services/firebase/config');
-  db = firebaseConfig.db;
-} catch {
-  // Fallback for test environment
-  db = {};
-}
-import { validateSchema } from './validation';
-import { CreateCategorySchema, CreateAccountSchema } from './validation';
+import { db } from '@/services/firebase/config';
 
 // ============================================================================
 // DEFAULT DATA STRUCTURES
@@ -42,7 +37,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'work',
     isDefault: true,
     isSystem: false,
-    sortOrder: 0
+    sortOrder: 0,
   },
   {
     name: 'Freelance Income',
@@ -51,7 +46,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'laptop',
     isDefault: true,
     isSystem: false,
-    sortOrder: 1
+    sortOrder: 1,
   },
   {
     name: 'Investment Income',
@@ -60,7 +55,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'trending-up',
     isDefault: true,
     isSystem: false,
-    sortOrder: 2
+    sortOrder: 2,
   },
   {
     name: 'Other Income',
@@ -69,7 +64,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'attach-money',
     isDefault: true,
     isSystem: false,
-    sortOrder: 3
+    sortOrder: 3,
   },
 
   // Expense Categories
@@ -80,7 +75,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'shopping-cart',
     isDefault: true,
     isSystem: false,
-    sortOrder: 10
+    sortOrder: 10,
   },
   {
     name: 'Utilities',
@@ -89,7 +84,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'flash-on',
     isDefault: true,
     isSystem: false,
-    sortOrder: 11
+    sortOrder: 11,
   },
   {
     name: 'Rent/Mortgage',
@@ -98,7 +93,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'home',
     isDefault: true,
     isSystem: false,
-    sortOrder: 12
+    sortOrder: 12,
   },
   {
     name: 'Transportation',
@@ -107,7 +102,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'directions-car',
     isDefault: true,
     isSystem: false,
-    sortOrder: 13
+    sortOrder: 13,
   },
   {
     name: 'Healthcare',
@@ -116,7 +111,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'local-hospital',
     isDefault: true,
     isSystem: false,
-    sortOrder: 14
+    sortOrder: 14,
   },
   {
     name: 'Entertainment',
@@ -125,7 +120,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'movie',
     isDefault: true,
     isSystem: false,
-    sortOrder: 15
+    sortOrder: 15,
   },
   {
     name: 'Dining Out',
@@ -134,7 +129,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'restaurant',
     isDefault: true,
     isSystem: false,
-    sortOrder: 16
+    sortOrder: 16,
   },
   {
     name: 'Shopping',
@@ -143,7 +138,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'shopping-bag',
     isDefault: true,
     isSystem: false,
-    sortOrder: 17
+    sortOrder: 17,
   },
   {
     name: 'Insurance',
@@ -152,7 +147,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'security',
     isDefault: true,
     isSystem: false,
-    sortOrder: 18
+    sortOrder: 18,
   },
   {
     name: 'Other Expenses',
@@ -161,7 +156,7 @@ export const DEFAULT_CATEGORIES = [
     icon: 'receipt',
     isDefault: true,
     isSystem: false,
-    sortOrder: 19
+    sortOrder: 19,
   },
 
   // Transfer Category
@@ -172,8 +167,8 @@ export const DEFAULT_CATEGORIES = [
     icon: 'swap-horiz',
     isDefault: true,
     isSystem: false,
-    sortOrder: 20
-  }
+    sortOrder: 20,
+  },
 ] as const;
 
 /**
@@ -188,7 +183,7 @@ export const DEFAULT_STARTER_ACCOUNT = {
   color: '#0a7ea4',
   icon: 'account-balance-wallet',
   includeInTotals: true,
-  sortOrder: 0
+  sortOrder: 0,
 } as const;
 
 // ============================================================================
@@ -207,7 +202,7 @@ export interface UserInitializationOptions {
   createDefaultCategories?: boolean;
   createStarterAccount?: boolean;
   starterAccountBalance?: number;
-  customCategories?: Array<typeof DEFAULT_CATEGORIES[number]>;
+  customCategories?: (typeof DEFAULT_CATEGORIES)[number][];
 }
 
 // ============================================================================
@@ -225,7 +220,7 @@ export async function initializeNewUser(
     createDefaultCategories = true,
     createStarterAccount = true,
     starterAccountBalance = 0,
-    customCategories = []
+    customCategories = [],
   } = options;
 
   const result: MigrationResult = {
@@ -233,7 +228,7 @@ export async function initializeNewUser(
     categoriesCreated: 0,
     accountsCreated: 0,
     errors: [],
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   try {
@@ -243,20 +238,25 @@ export async function initializeNewUser(
     // Create default categories
     if (createDefaultCategories) {
       const categories = [...DEFAULT_CATEGORIES, ...customCategories];
-      
+
       for (const categoryData of categories) {
         const categoryWithUser = {
           ...categoryData,
           userId,
           status: 'active' as const,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         // Validate category data
-        const validation = validateSchema(CreateCategorySchema, categoryWithUser);
+        const validation = validateSchema(
+          CreateCategorySchema,
+          categoryWithUser
+        );
         if (!validation.success) {
-          result.errors?.push(`Invalid category ${categoryData.name}: ${validation.errors?.message}`);
+          result.errors?.push(
+            `Invalid category ${categoryData.name}: ${validation.errors?.message}`
+          );
           continue;
         }
 
@@ -276,7 +276,7 @@ export async function initializeNewUser(
         status: 'active' as const,
         userId,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Validate account data
@@ -287,7 +287,9 @@ export async function initializeNewUser(
         operationCount++;
         result.accountsCreated = 1;
       } else {
-        result.errors?.push(`Invalid starter account: ${validation.errors?.message}`);
+        result.errors?.push(
+          `Invalid starter account: ${validation.errors?.message}`
+        );
       }
     }
 
@@ -299,10 +301,11 @@ export async function initializeNewUser(
       result.success = false;
       result.errors?.push('No operations to perform');
     }
-
   } catch (error) {
     result.success = false;
-    result.errors?.push(`Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors?.push(
+      `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
@@ -345,7 +348,7 @@ export async function migrateUserData(
   const result: MigrationResult = {
     success: false,
     errors: [],
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   try {
@@ -356,11 +359,14 @@ export async function migrateUserData(
     }
 
     // Future migration logic would go here
-    result.errors?.push(`Migration from ${fromVersion} to ${toVersion} not implemented`);
-    
+    result.errors?.push(
+      `Migration from ${fromVersion} to ${toVersion} not implemented`
+    );
   } catch (error) {
     result.success = false;
-    result.errors?.push(`Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors?.push(
+      `Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
@@ -369,12 +375,14 @@ export async function migrateUserData(
 /**
  * Recreate default categories for existing user
  */
-export async function recreateDefaultCategories(userId: string): Promise<MigrationResult> {
+export async function recreateDefaultCategories(
+  userId: string
+): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: false,
     categoriesCreated: 0,
     errors: [],
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   try {
@@ -386,13 +394,15 @@ export async function recreateDefaultCategories(userId: string): Promise<Migrati
         userId,
         status: 'active' as const,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Validate category data
       const validation = validateSchema(CreateCategorySchema, categoryWithUser);
       if (!validation.success) {
-        result.errors?.push(`Invalid category ${categoryData.name}: ${validation.errors?.message}`);
+        result.errors?.push(
+          `Invalid category ${categoryData.name}: ${validation.errors?.message}`
+        );
         continue;
       }
 
@@ -403,10 +413,11 @@ export async function recreateDefaultCategories(userId: string): Promise<Migrati
 
     await batch.commit();
     result.success = true;
-
   } catch (error) {
     result.success = false;
-    result.errors?.push(`Category recreation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.errors?.push(
+      `Category recreation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
@@ -433,7 +444,9 @@ export async function validateUserDataIntegrity(userId: string): Promise<{
 
     if (accountsSnapshot.empty) {
       issues.push('No accounts found');
-      suggestions.push('Create at least one account to start tracking transactions');
+      suggestions.push(
+        'Create at least one account to start tracking transactions'
+      );
     }
 
     // Check categories
@@ -449,10 +462,10 @@ export async function validateUserDataIntegrity(userId: string): Promise<{
     }
 
     // Check for required category types
-    const categories = categoriesSnapshot.docs.map(doc => doc.data());
-    const hasIncome = categories.some(cat => cat.type === 'income');
-    const hasExpense = categories.some(cat => cat.type === 'expense');
-    const hasTransfer = categories.some(cat => cat.type === 'transfer');
+    const categories = categoriesSnapshot.docs.map((doc) => doc.data());
+    const hasIncome = categories.some((cat) => cat.type === 'income');
+    const hasExpense = categories.some((cat) => cat.type === 'expense');
+    const hasTransfer = categories.some((cat) => cat.type === 'transfer');
 
     if (!hasIncome) {
       issues.push('No income categories found');
@@ -466,20 +479,23 @@ export async function validateUserDataIntegrity(userId: string): Promise<{
 
     if (!hasTransfer) {
       issues.push('No transfer category found');
-      suggestions.push('Add transfer category for account-to-account transfers');
+      suggestions.push(
+        'Add transfer category for account-to-account transfers'
+      );
     }
 
     return {
       valid: issues.length === 0,
       issues,
-      suggestions
+      suggestions,
     };
-
   } catch (error) {
     return {
       valid: false,
-      issues: [`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
-      suggestions: ['Check Firebase connection and permissions']
+      issues: [
+        `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ],
+      suggestions: ['Check Firebase connection and permissions'],
     };
   }
 }
@@ -491,9 +507,13 @@ export async function validateUserDataIntegrity(userId: string): Promise<{
 /**
  * Generate a unique account name for user
  */
-export function generateUniqueAccountName(existingNames: string[], baseType: string): string {
-  const baseName = baseType.charAt(0).toUpperCase() + baseType.slice(1) + ' Account';
-  
+export function generateUniqueAccountName(
+  existingNames: string[],
+  baseType: string
+): string {
+  const baseName =
+    baseType.charAt(0).toUpperCase() + baseType.slice(1) + ' Account';
+
   if (!existingNames.includes(baseName)) {
     return baseName;
   }
@@ -502,7 +522,7 @@ export function generateUniqueAccountName(existingNames: string[], baseType: str
   while (existingNames.includes(`${baseName} ${counter}`)) {
     counter++;
   }
-  
+
   return `${baseName} ${counter}`;
 }
 
@@ -517,11 +537,13 @@ export async function getCategoryByName(userId: string, categoryName: string) {
       where('name', '==', categoryName)
     );
     const snapshot = await getDocs(categoriesQuery);
-    
-    return snapshot.empty ? null : {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data()
-    };
+
+    return snapshot.empty
+      ? null
+      : {
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data(),
+        };
   } catch (error) {
     console.error('Error getting category by name:', error);
     return null;
@@ -537,7 +559,7 @@ export async function cleanupOrphanedData(userId: string): Promise<{
 }> {
   const result = {
     transactionsDeleted: 0,
-    issues: [] as string[]
+    issues: [] as string[],
   };
 
   try {
@@ -547,7 +569,7 @@ export async function cleanupOrphanedData(userId: string): Promise<{
       where('userId', '==', userId)
     );
     const accountsSnapshot = await getDocs(accountsQuery);
-    const accountIds = accountsSnapshot.docs.map(doc => doc.id);
+    const accountIds = accountsSnapshot.docs.map((doc) => doc.id);
 
     // Get all user transactions
     const transactionsQuery = query(
@@ -569,9 +591,10 @@ export async function cleanupOrphanedData(userId: string): Promise<{
     if (result.transactionsDeleted > 0) {
       await batch.commit();
     }
-
   } catch (error) {
-    result.issues.push(`Cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    result.issues.push(
+      `Cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 
   return result;
