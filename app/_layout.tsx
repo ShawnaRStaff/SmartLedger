@@ -7,6 +7,7 @@ import '../global.css';
 
 import { ThemeProvider } from '@/design-system';
 import { AuthProvider, useAuth } from '@/context/auth/AuthContext';
+import { ProfessionalAlertProvider } from '@/components/ui/ProfessionalAlert';
 
 function RootLayoutNav() {
   const segments = useSegments();
@@ -51,7 +52,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <RootLayoutNav />
+        <ProfessionalAlertProvider>
+          <RootLayoutNav />
+        </ProfessionalAlertProvider>
       </AuthProvider>
     </ThemeProvider>
   );

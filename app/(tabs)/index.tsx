@@ -9,7 +9,6 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  Alert,
   Dimensions,
   Animated,
   Platform,
@@ -24,6 +23,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useAccountSummary } from '../../src/features/check-register/hooks/useAccounts';
+import { ProfessionalAlert } from '@/components/ui/ProfessionalAlert';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -154,10 +154,12 @@ export default function ProfessionalHomeScreen() {
   }, []);
 
   const handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
-    ]);
+    ProfessionalAlert.confirm(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      () => signOut(),
+      () => {} // Cancel - do nothing
+    );
   };
 
   // Get greeting based on time

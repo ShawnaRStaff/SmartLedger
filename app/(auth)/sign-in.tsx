@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Typography } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ProfessionalAlert } from '@/components/ui/ProfessionalAlert';
 
 // Professional Color Palette (matching homepage)
 const COLORS = {
@@ -80,7 +80,10 @@ export default function SignInScreen() {
     if (result.success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert('Sign In Failed', result.error || 'An error occurred');
+      ProfessionalAlert.error(
+        'Sign In Failed',
+        result.error || 'An error occurred'
+      );
     }
   };
 

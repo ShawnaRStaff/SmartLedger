@@ -11,10 +11,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Alert,
   Switch,
+  useColorScheme,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography, useTheme } from '@/design-system';
+import { ProfessionalAlert } from '@/components/ui/ProfessionalAlert';
 import {
   validateSchema,
   CreateAccountSchema,
@@ -54,6 +58,42 @@ export interface AccountFormData {
   sortOrder: string;
   status?: AccountStatus;
 }
+
+// ============================================================================
+// PROFESSIONAL COLOR PALETTE
+// ============================================================================
+
+const COLORS = {
+  // Primary Colors
+  navy: '#1A237E',
+  darkNavy: '#0D47A1',
+  accent: '#1976D2',
+  accentLight: '#42A5F5',
+  accentDark: '#0D47A1',
+
+  // Secondary Colors
+  forest: '#2E7D32',
+  darkForest: '#1B5E20',
+
+  // Status Colors
+  success: '#2E7D32',
+  warning: '#F57C00',
+  error: '#C62828',
+
+  // Light Mode Colors
+  surface: '#FFFFFF',
+  textPrimary: '#263238',
+  textSecondary: '#546E7A',
+
+  // Dark Mode Colors
+  darkSurface: '#1E1E1E',
+  darkSurfaceElevated: '#252525',
+  darkTextPrimary: '#FFFFFF',
+  darkTextSecondary: '#B0B0B0',
+
+  // Glass Effects
+  shadow: 'rgba(0, 0, 0, 0.08)',
+};
 
 // ============================================================================
 // CONSTANTS
@@ -115,6 +155,8 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   testID,
 }) => {
   const theme = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   // ============================================================================
   // FORM STATE
@@ -219,7 +261,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   const handleSubmit = () => {
     if (!validateForm()) {
-      Alert.alert(
+      ProfessionalAlert.error(
         'Validation Error',
         'Please fix the errors below and try again.'
       );
@@ -445,8 +487,43 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? COLORS.darkSurface : COLORS.surface },
+      ]}
     >
+      {/* Professional Header */}
+      <LinearGradient
+        colors={[COLORS.accent, COLORS.accentDark]}
+        style={styles.professionalHeader}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerContent}>
+          <Pressable onPress={onCancel} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="white" />
+          </Pressable>
+          <View style={styles.headerCenter}>
+            <View style={styles.headerIconContainer}>
+              <Ionicons
+                name={isEditing ? 'pencil' : 'add-circle'}
+                size={32}
+                color="white"
+              />
+            </View>
+            <Text style={styles.headerTitle}>
+              {isEditing ? 'Edit Account' : 'Create Account'}
+            </Text>
+            <Text style={styles.headerSubtitle}>
+              {isEditing
+                ? 'Update account information'
+                : 'Set up a new financial account'}
+            </Text>
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
+      </LinearGradient>
+
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -539,35 +616,70 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         </View>
       </ScrollView>
 
-      {/* Action Buttons */}
-      <View style={[styles.actions, { borderTopColor: theme.colors.border }]}>
+      {/* Professional Action Buttons */}
+      <View
+        style={[
+          styles.actions,
+          {
+            backgroundColor: isDark ? COLORS.darkSurface : COLORS.surface,
+          },
+        ]}
+      >
         <Pressable
           style={[styles.actionButton, styles.cancelButton]}
           onPress={onCancel}
           disabled={loading}
           testID={`${testID}-cancel`}
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <LinearGradient
+            colors={
+              isDark
+                ? [COLORS.darkSurfaceElevated, COLORS.darkSurfaceElevated]
+                : ['#F5F5F5', '#EEEEEE']
+            }
+            style={styles.buttonGradient}
+          >
+            <Ionicons
+              name="close"
+              size={18}
+              color={isDark ? COLORS.darkTextPrimary : COLORS.textPrimary}
+            />
+            <Text
+              style={[
+                styles.cancelButtonText,
+                {
+                  color: isDark ? COLORS.darkTextPrimary : COLORS.textPrimary,
+                },
+              ]}
+            >
+              Cancel
+            </Text>
+          </LinearGradient>
         </Pressable>
 
         <Pressable
-          style={[
-            styles.actionButton,
-            styles.submitButton,
-            { backgroundColor: theme.colors.primary },
-            loading && styles.disabledButton,
-          ]}
+          style={[styles.actionButton, loading && styles.disabledButton]}
           onPress={handleSubmit}
           disabled={loading}
           testID={`${testID}-submit`}
         >
-          <Text style={styles.submitButtonText}>
-            {loading
-              ? 'Saving...'
-              : isEditing
-                ? 'Update Account'
-                : 'Create Account'}
-          </Text>
+          <LinearGradient
+            colors={[COLORS.forest, COLORS.darkForest]}
+            style={styles.buttonGradient}
+          >
+            <Ionicons
+              name={loading ? 'hourglass' : isEditing ? 'checkmark' : 'add'}
+              size={18}
+              color="white"
+            />
+            <Text style={styles.submitButtonText}>
+              {loading
+                ? 'Saving...'
+                : isEditing
+                  ? 'Update Account'
+                  : 'Create Account'}
+            </Text>
+          </LinearGradient>
         </Pressable>
       </View>
     </View>
@@ -581,6 +693,73 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  // Professional Header Styles
+  professionalHeader: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+
+  headerIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+
+  headerSpacer: {
+    width: 40,
   },
 
   scrollView: {
@@ -717,38 +896,49 @@ const styles = StyleSheet.create({
 
   actions: {
     flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    gap: 12,
+    padding: 20,
+    gap: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
 
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+
+  buttonGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
   },
 
-  cancelButton: {
-    backgroundColor: '#F5F5F5',
-  },
-
-  submitButton: {
-    backgroundColor: '#2196F3',
-  },
+  cancelButton: {},
 
   disabledButton: {
     opacity: 0.6,
   },
 
   cancelButtonText: {
-    color: '#757575',
     fontSize: 16,
     fontWeight: '600',
   },
 
   submitButtonText: {
-    color: '#FFFFFF',
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Typography } from '@/design-system';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ProfessionalAlert } from '@/components/ui/ProfessionalAlert';
 
 // Professional Color Palette (matching sign-in)
 const COLORS = {
@@ -71,13 +71,17 @@ export default function ForgotPasswordScreen() {
 
     if (result.success) {
       setEmailSent(true);
-      Alert.alert(
+      ProfessionalAlert.alert(
         'Email Sent',
         'Check your email for password reset instructions.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/sign-in') }]
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/sign-in') }],
+        { type: 'success' }
       );
     } else {
-      Alert.alert('Reset Failed', result.error || 'An error occurred');
+      ProfessionalAlert.error(
+        'Reset Failed',
+        result.error || 'An error occurred'
+      );
     }
   };
 

@@ -10,14 +10,52 @@ import {
   Pressable,
   Modal,
   TextInput,
-  Alert,
   RefreshControl,
   FlatList,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography, Button, createThemedStyles } from '@/design-system';
+import { ProfessionalAlert } from '@/components/ui/ProfessionalAlert';
 import { useAuth } from '@/context/auth/AuthContext';
 import { useAccounts } from '../../hooks/useAccounts';
-import type { Account, Transaction } from '../../types';
+import {
+  useTransactionForm,
+  useAccountsForTransaction,
+} from '../../hooks/useTransaction';
+import type { Account, Transaction, TransactionType } from '../../types';
+
+// ============================================================================
+// PROFESSIONAL COLOR PALETTE
+// ============================================================================
+
+const COLORS = {
+  // Primary Colors
+  accent: '#1976D2',
+  accentDark: '#0D47A1',
+  forest: '#2E7D32',
+  darkForest: '#1B5E20',
+
+  // Status Colors
+  success: '#2E7D32',
+  error: '#C62828',
+
+  // Light Mode Colors
+  textPrimary: '#263238',
+  textSecondary: '#546E7A',
+
+  // Dark Mode Colors
+  darkSurface: '#1E1E1E',
+  darkTextPrimary: '#FFFFFF',
+  darkTextSecondary: '#B0B0B0',
+
+  // Glass Effects
+  shadow: 'rgba(0, 0, 0, 0.08)',
+};
 
 // ============================================================================
 // MAIN ACCOUNTS SCREEN - Financial Command Center
@@ -26,6 +64,8 @@ import type { Account, Transaction } from '../../types';
 export default function AccountsMainScreen() {
   const { user } = useAuth();
   const styles = useStyles();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   // State Management
   const [activeTab, setActiveTab] = useState<
@@ -76,6 +116,52 @@ export default function AccountsMainScreen() {
     autoRefresh: true,
   });
 
+  // Transaction Form Management
+  const transactionForm = useTransactionForm({
+    validateOnChange: true,
+    initialData: {
+      date: new Date(),
+      status: 'pending',
+    },
+  });
+
+  const { accounts: accountsForTransaction, loading: accountsLoading } =
+    useAccountsForTransaction();
+
+  // Transaction type selection
+  const [selectedTransactionType, setSelectedTransactionType] =
+    useState<TransactionType>('deposit');
+
+  // Transaction handlers
+  const handleTransactionTypeSelect = (type: TransactionType) => {
+    setSelectedTransactionType(type);
+    transactionForm.setValue('type', type);
+  };
+
+  const handleCreateTransaction = async () => {
+    const result = await transactionForm.createTransaction();
+    if (result.success) {
+      ProfessionalAlert.success('Success!', 'Transaction added successfully');
+      setShowAddTransaction(false);
+      refreshAccounts(); // Refresh account data to show updated balances
+    } else {
+      ProfessionalAlert.error(
+        'Error',
+        result.error || 'Failed to create transaction'
+      );
+    }
+  };
+
+  // Create default category if none selected (temporary solution)
+  const defaultCategories = [
+    { id: 'income', name: 'Income', color: '#2E7D32' },
+    { id: 'food', name: 'Food', color: '#FF9800' },
+    { id: 'transport', name: 'Transport', color: '#2196F3' },
+    { id: 'entertainment', name: 'Entertainment', color: '#9C27B0' },
+    { id: 'utilities', name: 'Utilities', color: '#607D8B' },
+    { id: 'other', name: 'Other', color: '#795548' },
+  ];
+
   // ============================================================================
   // QUICK ACTION BAR
   // ============================================================================
@@ -100,7 +186,9 @@ export default function AccountsMainScreen() {
 
       <Pressable
         style={styles.quickActionButton}
-        onPress={() => Alert.alert('Export', 'Export feature coming soon!')}
+        onPress={() =>
+          ProfessionalAlert.alert('Export', 'Export feature coming soon!')
+        }
       >
         <Typography variant="body1">📤 Export</Typography>
       </Pressable>
@@ -228,7 +316,10 @@ export default function AccountsMainScreen() {
       <Button
         variant="outline"
         onPress={() =>
-          Alert.alert('Add Account', 'Account creation form coming soon!')
+          ProfessionalAlert.alert(
+            'Add Account',
+            'Account creation form coming soon!'
+          )
         }
         style={styles.addAccountButton}
       >
@@ -355,7 +446,10 @@ export default function AccountsMainScreen() {
       <Button
         variant="outline"
         onPress={() =>
-          Alert.alert('Add Category', 'Category creation coming soon!')
+          ProfessionalAlert.alert(
+            'Add Category',
+            'Category creation coming soon!'
+          )
         }
         style={styles.addCategoryButton}
       >
@@ -365,7 +459,7 @@ export default function AccountsMainScreen() {
   );
 
   // ============================================================================
-  // ADD TRANSACTION MODAL
+  // PROFESSIONAL ADD TRANSACTION MODAL
   // ============================================================================
 
   const renderAddTransactionModal = () => (
@@ -375,73 +469,473 @@ export default function AccountsMainScreen() {
       transparent={true}
       onRequestClose={() => setShowAddTransaction(false)}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Typography variant="h2">Add Transaction</Typography>
-            <Pressable onPress={() => setShowAddTransaction(false)}>
-              <Typography variant="h3">✕</Typography>
-            </Pressable>
-          </View>
-
-          {/* Transaction Type Selector */}
-          <View style={styles.transactionTypeSelector}>
-            <Pressable style={[styles.typeButton, styles.activeType]}>
-              <Typography variant="body1">Income</Typography>
-            </Pressable>
-            <Pressable style={styles.typeButton}>
-              <Typography variant="body1">Expense</Typography>
-            </Pressable>
-            <Pressable style={styles.typeButton}>
-              <Typography variant="body1">Transfer</Typography>
-            </Pressable>
-          </View>
-
-          {/* Form Fields */}
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Amount"
-            keyboardType="decimal-pad"
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Description"
-            placeholderTextColor="#999"
-          />
-
-          <Pressable style={styles.modalInput}>
-            <Typography variant="body1" color="textSecondary">
-              Select Category →
-            </Typography>
-          </Pressable>
-
-          <Pressable style={styles.modalInput}>
-            <Typography variant="body1" color="textSecondary">
-              Select Account →
-            </Typography>
-          </Pressable>
-
-          {/* Action Buttons */}
-          <View style={styles.modalActions}>
-            <Button
-              variant="outline"
-              onPress={() => setShowAddTransaction(false)}
+      <TouchableOpacity
+        style={[
+          styles.modalOverlay,
+          {
+            backgroundColor: isDark
+              ? 'rgba(0, 0, 0, 0.8)'
+              : 'rgba(0, 0, 0, 0.5)',
+          },
+        ]}
+        activeOpacity={1}
+        onPress={() => setShowAddTransaction(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {}} // Prevent dismiss when tapping modal content
+        >
+          <View
+            style={[
+              styles.professionalModalContainer,
+              { backgroundColor: isDark ? COLORS.darkSurface : 'white' },
+            ]}
+          >
+            {/* Professional Header with LinearGradient */}
+            <LinearGradient
+              colors={[COLORS.forest, COLORS.darkForest]}
+              style={styles.professionalModalHeader}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
             >
-              Cancel
-            </Button>
-            <Button
-              onPress={() => {
-                Alert.alert('Success', 'Transaction added!');
-                setShowAddTransaction(false);
-              }}
+              <View style={styles.professionalHeaderContent}>
+                <TouchableOpacity
+                  onPress={() => setShowAddTransaction(false)}
+                  style={styles.professionalCloseButton}
+                >
+                  <Ionicons name="close" size={24} color="white" />
+                </TouchableOpacity>
+                <View style={styles.professionalHeaderCenter}>
+                  <View style={styles.professionalHeaderIcon}>
+                    <Ionicons name="add-circle" size={32} color="white" />
+                  </View>
+                  <Text style={styles.professionalModalTitle}>
+                    Add Transaction
+                  </Text>
+                  <Text style={styles.professionalModalSubtitle}>
+                    Record your income or expense
+                  </Text>
+                </View>
+                <View style={styles.headerSpacer} />
+              </View>
+            </LinearGradient>
+
+            {/* Modal Body */}
+            <View
+              style={[
+                styles.professionalModalBody,
+                { backgroundColor: isDark ? COLORS.darkSurface : 'white' },
+              ]}
             >
-              Add Transaction
-            </Button>
+              {/* Transaction Type Selector */}
+              <View style={styles.transactionTypeSelector}>
+                <Pressable
+                  style={[
+                    styles.typeButton,
+                    selectedTransactionType === 'deposit' && styles.activeType,
+                  ]}
+                  onPress={() => handleTransactionTypeSelect('deposit')}
+                >
+                  <Ionicons
+                    name="arrow-down"
+                    size={18}
+                    color={
+                      selectedTransactionType === 'deposit'
+                        ? 'white'
+                        : isDark
+                          ? COLORS.darkTextSecondary
+                          : '#666'
+                    }
+                  />
+                  <Text
+                    style={[
+                      selectedTransactionType === 'deposit'
+                        ? styles.activeTypeText
+                        : styles.typeButtonText,
+                      selectedTransactionType !== 'deposit' && {
+                        color: isDark
+                          ? COLORS.darkTextSecondary
+                          : COLORS.textSecondary,
+                      },
+                    ]}
+                  >
+                    Income
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.typeButton,
+                    selectedTransactionType === 'withdrawal' &&
+                      styles.activeType,
+                  ]}
+                  onPress={() => handleTransactionTypeSelect('withdrawal')}
+                >
+                  <Ionicons
+                    name="arrow-up"
+                    size={18}
+                    color={
+                      selectedTransactionType === 'withdrawal'
+                        ? 'white'
+                        : isDark
+                          ? COLORS.darkTextSecondary
+                          : '#666'
+                    }
+                  />
+                  <Text
+                    style={[
+                      selectedTransactionType === 'withdrawal'
+                        ? styles.activeTypeText
+                        : styles.typeButtonText,
+                      selectedTransactionType !== 'withdrawal' && {
+                        color: isDark
+                          ? COLORS.darkTextSecondary
+                          : COLORS.textSecondary,
+                      },
+                    ]}
+                  >
+                    Expense
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.typeButton,
+                    selectedTransactionType === 'transfer' && styles.activeType,
+                  ]}
+                  onPress={() => handleTransactionTypeSelect('transfer')}
+                >
+                  <Ionicons
+                    name="swap-horizontal"
+                    size={18}
+                    color={
+                      selectedTransactionType === 'transfer'
+                        ? 'white'
+                        : isDark
+                          ? COLORS.darkTextSecondary
+                          : '#666'
+                    }
+                  />
+                  <Text
+                    style={[
+                      selectedTransactionType === 'transfer'
+                        ? styles.activeTypeText
+                        : styles.typeButtonText,
+                      selectedTransactionType !== 'transfer' && {
+                        color: isDark
+                          ? COLORS.darkTextSecondary
+                          : COLORS.textSecondary,
+                      },
+                    ]}
+                  >
+                    Transfer
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Form Fields with Professional Styling */}
+              <View style={styles.professionalFormFields}>
+                <View style={styles.professionalInputGroup}>
+                  <Text
+                    style={[
+                      styles.professionalInputLabel,
+                      {
+                        color: isDark
+                          ? COLORS.darkTextPrimary
+                          : COLORS.textPrimary,
+                      },
+                    ]}
+                  >
+                    Amount *
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.professionalInput,
+                      {
+                        backgroundColor: isDark
+                          ? COLORS.darkSurface
+                          : '#F8F9FA',
+                        color: isDark ? COLORS.darkTextPrimary : '#263238',
+                      },
+                      transactionForm.errors.amount && {
+                        borderColor: COLORS.error,
+                        borderWidth: 1,
+                      },
+                    ]}
+                    placeholder="0.00"
+                    keyboardType="decimal-pad"
+                    value={transactionForm.formData.amount}
+                    onChangeText={(text) => {
+                      // Format as user types
+                      const formatted = transactionForm.formatAmount(text);
+                      transactionForm.setValue('amount', formatted);
+                    }}
+                    placeholderTextColor={
+                      isDark ? COLORS.darkTextSecondary : '#999'
+                    }
+                  />
+                  {transactionForm.errors.amount && (
+                    <Text style={[styles.errorText, { color: COLORS.error }]}>
+                      {transactionForm.errors.amount}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.professionalInputGroup}>
+                  <Text
+                    style={[
+                      styles.professionalInputLabel,
+                      {
+                        color: isDark
+                          ? COLORS.darkTextPrimary
+                          : COLORS.textPrimary,
+                      },
+                    ]}
+                  >
+                    Description *
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.professionalInput,
+                      {
+                        backgroundColor: isDark
+                          ? COLORS.darkSurface
+                          : '#F8F9FA',
+                        color: isDark ? COLORS.darkTextPrimary : '#263238',
+                      },
+                      transactionForm.errors.description && {
+                        borderColor: COLORS.error,
+                        borderWidth: 1,
+                      },
+                    ]}
+                    placeholder="What was this for?"
+                    value={transactionForm.formData.description}
+                    onChangeText={(text) =>
+                      transactionForm.setValue('description', text)
+                    }
+                    placeholderTextColor={
+                      isDark ? COLORS.darkTextSecondary : '#999'
+                    }
+                  />
+                  {transactionForm.errors.description && (
+                    <Text style={[styles.errorText, { color: COLORS.error }]}>
+                      {transactionForm.errors.description}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.professionalInputGroup}>
+                  <Text
+                    style={[
+                      styles.professionalInputLabel,
+                      {
+                        color: isDark
+                          ? COLORS.darkTextPrimary
+                          : COLORS.textPrimary,
+                      },
+                    ]}
+                  >
+                    Category
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.professionalInput,
+                      styles.professionalSelector,
+                      {
+                        backgroundColor: isDark
+                          ? COLORS.darkSurface
+                          : '#F8F9FA',
+                      },
+                      transactionForm.errors.categoryId && {
+                        borderColor: COLORS.error,
+                        borderWidth: 1,
+                      },
+                    ]}
+                    onPress={() => {
+                      // For now, just set a default category based on transaction type
+                      const defaultCategory =
+                        selectedTransactionType === 'deposit'
+                          ? 'income'
+                          : 'other';
+                      transactionForm.setValue('categoryId', defaultCategory);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.professionalSelectorText,
+                        {
+                          color: transactionForm.formData.categoryId
+                            ? isDark
+                              ? COLORS.darkTextPrimary
+                              : COLORS.textPrimary
+                            : isDark
+                              ? COLORS.darkTextSecondary
+                              : COLORS.textSecondary,
+                        },
+                      ]}
+                    >
+                      {transactionForm.formData.categoryId
+                        ? defaultCategories.find(
+                            (cat) =>
+                              cat.id === transactionForm.formData.categoryId
+                          )?.name || 'Select Category'
+                        : 'Select Category'}
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={isDark ? COLORS.darkTextSecondary : '#999'}
+                    />
+                  </Pressable>
+                  {transactionForm.errors.categoryId && (
+                    <Text style={[styles.errorText, { color: COLORS.error }]}>
+                      {transactionForm.errors.categoryId}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.professionalInputGroup}>
+                  <Text
+                    style={[
+                      styles.professionalInputLabel,
+                      {
+                        color: isDark
+                          ? COLORS.darkTextPrimary
+                          : COLORS.textPrimary,
+                      },
+                    ]}
+                  >
+                    Account
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.professionalInput,
+                      styles.professionalSelector,
+                      {
+                        backgroundColor: isDark
+                          ? COLORS.darkSurface
+                          : '#F8F9FA',
+                      },
+                      transactionForm.errors.accountId && {
+                        borderColor: COLORS.error,
+                        borderWidth: 1,
+                      },
+                    ]}
+                    onPress={() => {
+                      // Set first account as default if available
+                      if (
+                        accountsForTransaction.length > 0 &&
+                        !transactionForm.formData.accountId
+                      ) {
+                        transactionForm.setValue(
+                          'accountId',
+                          accountsForTransaction[0].id
+                        );
+                      }
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.professionalSelectorText,
+                        {
+                          color: transactionForm.formData.accountId
+                            ? isDark
+                              ? COLORS.darkTextPrimary
+                              : COLORS.textPrimary
+                            : isDark
+                              ? COLORS.darkTextSecondary
+                              : COLORS.textSecondary,
+                        },
+                      ]}
+                    >
+                      {transactionForm.formData.accountId
+                        ? accountsForTransaction.find(
+                            (acc) =>
+                              acc.id === transactionForm.formData.accountId
+                          )?.name || 'Select Account'
+                        : accountsLoading
+                          ? 'Loading accounts...'
+                          : 'Select Account'}
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={isDark ? COLORS.darkTextSecondary : '#999'}
+                    />
+                  </Pressable>
+                  {transactionForm.errors.accountId && (
+                    <Text style={[styles.errorText, { color: COLORS.error }]}>
+                      {transactionForm.errors.accountId}
+                    </Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Professional Action Buttons */}
+              <View style={styles.professionalModalActions}>
+                <TouchableOpacity
+                  style={styles.professionalActionButton}
+                  onPress={() => setShowAddTransaction(false)}
+                >
+                  <LinearGradient
+                    colors={
+                      isDark
+                        ? [COLORS.darkSurface, COLORS.darkSurface]
+                        : ['#F5F5F5', '#EEEEEE']
+                    }
+                    style={styles.professionalButtonGradient}
+                  >
+                    <Ionicons
+                      name="close"
+                      size={18}
+                      color={isDark ? COLORS.darkTextPrimary : '#666'}
+                    />
+                    <Text
+                      style={[
+                        styles.professionalCancelText,
+                        {
+                          color: isDark ? COLORS.darkTextPrimary : '#666',
+                        },
+                      ]}
+                    >
+                      Cancel
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.professionalActionButton,
+                    transactionForm.isSubmitting && { opacity: 0.7 },
+                  ]}
+                  onPress={handleCreateTransaction}
+                  disabled={
+                    transactionForm.isSubmitting || !transactionForm.isValid
+                  }
+                >
+                  <LinearGradient
+                    colors={[COLORS.forest, COLORS.darkForest]}
+                    style={styles.professionalButtonGradient}
+                  >
+                    {transactionForm.isSubmitting ? (
+                      <Ionicons
+                        name="hourglass-outline"
+                        size={18}
+                        color="white"
+                      />
+                    ) : (
+                      <Ionicons name="checkmark" size={18} color="white" />
+                    )}
+                    <Text style={styles.professionalSubmitText}>
+                      {transactionForm.isSubmitting
+                        ? 'Adding...'
+                        : 'Add Transaction'}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 
@@ -686,63 +1180,193 @@ const useStyles = createThemedStyles((theme) => ({
     margin: theme.spacing.lg,
   },
 
-  // Modal Styles
+  // Professional Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-
-  modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    padding: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl * 2,
-  },
-
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    paddingHorizontal: 20,
+  },
+
+  professionalModalContainer: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 15,
+      },
+    }),
+  },
+
+  professionalModalHeader: {
+    paddingVertical: 25,
+    paddingHorizontal: 20,
+  },
+
+  professionalHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  professionalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  professionalHeaderCenter: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+
+  professionalHeaderIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  professionalModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+
+  professionalModalSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+
+  headerSpacer: {
+    width: 40,
+  },
+
+  professionalModalBody: {
+    padding: 20,
   },
 
   transactionTypeSelector: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
+    gap: 8,
+    marginBottom: 20,
   },
 
   typeButton: {
     flex: 1,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
+    padding: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#E0E0E0',
   },
 
   activeType: {
-    backgroundColor: theme.colors.primary + '20',
-    borderColor: theme.colors.primary,
+    backgroundColor: COLORS.success,
+    borderColor: COLORS.success,
   },
 
-  modalInput: {
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.md,
+  activeTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+  },
+
+  typeButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
+  professionalFormFields: {
+    gap: 16,
+    marginBottom: 20,
+  },
+
+  professionalInputGroup: {
+    gap: 8,
+  },
+
+  professionalInputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+
+  professionalInput: {
+    padding: 16,
+    borderRadius: 12,
     fontSize: 16,
-    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#E0E0E0',
   },
 
-  modalActions: {
+  professionalSelector: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.xl,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  professionalSelectorText: {
+    fontSize: 16,
+  },
+
+  professionalModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  professionalActionButton: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+
+  professionalButtonGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  professionalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  professionalSubmitText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
   },
 }));
